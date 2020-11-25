@@ -37,4 +37,7 @@ install.packages("rmarkdown")
 ```{r}
 install.packages("knitr")
 ```
+```{r}
+install.packages("BiocStyle")
+```
 

@@ -1,25 +1,28 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  github_document:
+    toc: true
+    toc_depth: 2
 ---
-#PhyloSeq
+# PhyloSeq
 Amplicon bioinformatics : from raw reads to tables
 
-#Loading the data
+## Loading the data
 ```{r}
 ps_connect <-url("https://raw.githubusercontent.com/spholmes/F1000_workflow/master/data/ps.rds")
 ps = readRDS(ps_connect)
 ps
 ```
 
-#Taxonomic filtering
+## Taxonomic filtering
 ```{r}
 # Show available ranks in the dataset
 rank_names(ps)
 ```
 We can see the different rank names.
 
-#Create table, number of features for each phyla
+## Create table, number of features for each phyla
 ```{r}
 table(tax_table(ps)[, "Phylum"], exclude = NULL)
 ```
@@ -46,7 +49,7 @@ plyr::ddply(prevdf, "Phylum", function(df1){cbind(mean(df1$Prevalence),sum(df1$P
 ```
 We can see the phyla prevalence.
 
-#Filtering
+## Filtering
 ```{r}
 # Define phyla to filter
 filterPhyla = c("Fusobacteria", "Deinococcus-Thermus")
@@ -55,8 +58,8 @@ ps1 = subset_taxa(ps, !Phylum %in% filterPhyla)
 ps1
 ```
 
-#Prevalence Filtering
-##Unsupervised. This filtering step can be applied even in settings where taxonomic annotation is unavailable or unreliable.
+## Prevalence Filtering
+## Unsupervised. This filtering step can be applied even in settings where taxonomic annotation is unavailable or unreliable.
 ```{r}
 # Subset to the remaining phyla
 prevdf1 = subset(prevdf, Phylum %in% get_taxa_unique(ps1, "Phylum"))
@@ -71,7 +74,7 @@ We explore the relationship of prevalence and total read count for each feature
 Figure : Taxa prevalence versus total counts
 No natural separation is immediately evident. It could be reasonably to define a prevalence threshold in a range of zero to ten percent or so. 
 
-##Define prevalence threshold ad 5% of total samples
+## Define prevalence threshold ad 5% of total samples
 ```{r}
 prevalenceThreshold = 0.05 * nsamples(ps)
 prevalenceThreshold
@@ -83,11 +86,11 @@ ps2 = prune_taxa(keepTaxa, ps)
 
 
 
-#Agglomerate taxa
+## Agglomerate taxa
 Useful to agglomerate the data features corresponding to closely related data when there is known to be a lot of species or sub-species functional redundancy in a community.
 Taxonomic agglomeration has the advantage of being much easier to define ahead of time. 
 
-##Combine all features that descend from the same genus
+## Combine all features that descend from the same genus
 How many genera would be present after filtering ?
 ```{r}
 length(get_taxa_unique(ps2, taxonomic.rank = "Genus"))
@@ -120,15 +123,80 @@ p4tree = plot_tree(ps4, method = "treeonly",
 ```
 
 ```{r}
-grid.arrange(nrow = 1, p2tree, p3tree, p4tree)
-```
-```{r}
 install.packages("gridExtra")
 ```
 
 ```{r}
 grid.arrange(nrow = 1, p2tree, p3tree, p4tree)
 ```
+On the left : original tree
+In the middle : Genus rank
+On the right : phylogenetic agglomeration at a fixed distance of 0.4
+
+## Abundance value transformation
+Transform microbiome count data to account for differences in library size, variance, scale, etc.
+Relative abundance graphic. 
+
+```{r}
+plot_abundance = function(physeq,title = "",
+                          Facet = "Order", Color = "Phylum"){
+  # Arbitrary subset, based on Phylum, for plotting
+  p1f = subset_taxa(physeq, Phylum %in% c("Firmicutes"))
+  mphyseq = psmelt(p1f)
+  mphyseq <- subset(mphyseq, Abundance > 0)
+  ggplot(data = mphyseq, mapping = aes_string(x = "sex",y = "Abundance",
+                              color = Color, fill = Color)) +
+    geom_violin(fill = NA) +
+    geom_point(size = 1, alpha = 0.3,
+               position = position_jitter(width = 0.3)) +
+    facet_wrap(facets = Facet) + scale_y_log10()+
+    theme(legend.position="none")
+}
+```
+
+## Transform to relative abundance
+```{r}
+ps3ra = transform_sample_counts(ps3, function(x){x / sum(x)})
+```
+
+```{r}
+plotBefore = plot_abundance(ps3,"")
+plotAfter = plot_abundance(ps3ra,"")
+# Combine each plot into one graphic.
+grid.arrange(nrow = 2,  plotBefore, plotAfter)
+```
+Abundance values before and after transformation. Original abundances on the top and relative at the bottom. 
+
+## Sous-ensemble par la taxonomie
+Nous spécifions un rang taxonomique plus précis afin d'expliquer l'abondance bimodale précédente. 
+
+```{r}
+psOrd = subset_taxa(ps3ra, Order == "Lactobacillales")
+plot_abundance(psOrd, Facet = "Genus", Color = NULL)
+```
+
+Nous pouvons voir les abondances relatives des Lactobacillales selon le sexe et le genre d'hôte. Nous voyons une abondance relative des Lactobacillus plus importante que celle des Streptococcus. 
 
 
+```{r}
+.cran_packages <- c( "shiny","miniUI", "caret", "pls", "e1071", "ggplot2", "randomForest", "dplyr", "ggrepel", "nlme", "devtools",
+                  "reshape2", "PMA", "structSSI", "ade4",
+                  "ggnetwork", "intergraph", "scales")
+.github_packages <- c("jfukuyama/phyloseqGraphTest")
+.bioc_packages <- c("genefilter", "impute")
+# Install CRAN packages (if not already installed)
+.inst <- .cran_packages %in% installed.packages()
+if (any(!.inst)){
+  install.packages(.cran_packages[!.inst],repos = "http://cran.rstudio.com/")
+}
+.inst <- .github_packages %in% installed.packages()
+if (any(!.inst)){
+  devtools::install_github(.github_packages[!.inst])
+}
+
+.inst <- .bioc_packages %in% installed.packages()
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install(version = "3.12")
+```
 
