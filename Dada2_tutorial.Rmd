@@ -5,8 +5,7 @@ output:
   html_notebook: default
 ---
 
-#Chargement du package Dada2
-
+#Loading the dada2 package
 ```{r}
 library(dada2); packageVersion("dada2")
 ```
@@ -19,7 +18,7 @@ path <- "~/MiSeq_SOP" # CHANGE ME to the directory containing the fastq files af
 list.files(path)
 ```
 
-#Obtention des "forward" et "reverse"
+#Forward and Reverse
 ```{r}
 # Forward and reverse fastq filenames have format: SAMPLENAME_R1_001.fastq and SAMPLENAME_R2_001.fastq
 fnFs <- sort(list.files(path, pattern="_R1_001.fastq", full.names = TRUE))
@@ -29,7 +28,7 @@ sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
 ```
 
 
-#Maintenant, on peut obtenir la qualité de lecture
+#Quality Score
 ```{r}
 plotQualityProfile(fnFs[1:2])
 ```
@@ -69,7 +68,7 @@ errF <- learnErrors(filtFs, multithread=TRUE)
 errR <- learnErrors(filtRs, multithread=TRUE)
 ```
 
-#Visualisation du taux d'erreurs estimés
+#Learn the Error Rates - Visualization
 ```{r}
 plotErrors(errF, nominalQ=TRUE)
 ```
@@ -86,13 +85,16 @@ dadaRs <- dada(filtRs, err=errR, multithread=TRUE)
 ```{r}
 dadaFs[[1]]
 ```
+Cela permet de visualiser les vrais variants à partir de séquences uniques. 
 
+#Merge paired reads - Denoising
 ```{r}
 mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose=TRUE)
 # Inspect the merger data.frame from the first sample
 head(mergers[[1]])
 ```
 
+#Construct Sequence Table - Amplicon Sequence Variant Table
 ```{r}
 seqtab <- makeSequenceTable(mergers)
 dim(seqtab)
@@ -103,6 +105,7 @@ dim(seqtab)
 table(nchar(getSequences(seqtab)))
 ```
 
+#Remove chimeras
 ```{r}
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
 dim(seqtab.nochim)
@@ -111,6 +114,8 @@ dim(seqtab.nochim)
 ```{r}
 sum(seqtab.nochim)/sum(seqtab)
 ```
+Chimeras account about 4% merged sequence reads when we account for the abundance of variants.
+
 
 ```{r}
 getN <- function(x) sum(getUniques(x))
