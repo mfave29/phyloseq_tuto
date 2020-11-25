@@ -1,0 +1,16 @@
+---
+title: "R Notebook"
+output: github_document
+---
+
+# mon premier md
+ceci est un exemple de RMD, qui devient md apres un knitt, qui sera interprete comme une page web par github
+
+
+
+```{r}
+library(rmarkdown)
+library(knitr)
+plot(cars)
+```
+
