@@ -30,3 +30,11 @@ library(usethis)
 
 ```
 
+```{r}
+install.packages("rmarkdown")
+```
+
+```{r}
+install.packages("knitr")
+```
+
