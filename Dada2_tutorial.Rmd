@@ -116,7 +116,7 @@ sum(seqtab.nochim)/sum(seqtab)
 ```
 Chimeras account about 4% merged sequence reads when we account for the abundance of variants.
 
-
+#Track reads through the pipeline
 ```{r}
 getN <- function(x) sum(getUniques(x))
 track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim))
@@ -125,27 +125,12 @@ colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "n
 rownames(track) <- sample.names
 head(track)
 ```
+Sanity check
+There is not too much loss
 
-```{r}
-taxa <- assignTaxonomy(seqtab.nochim, "~/tax/silva_nr_v132_train_set.fa.gz", multithread=TRUE)
-```
-```{r}
-silva_nr_v132_train_set.fa.gz
-```
-```{r}
-wget silva_nr_v132_train_set.fa.gz
-```
-
-```{bash}
-wget silva_nr_v132_train_set.fa.gz
-```
-
+#Assign taxonomy
 ```{bash}
 wget https://zenodo.org/record/3986799/files/silva_nr99_v138_train_set.fa.gz
-```
-
-```{r}
-taxa <- assignTaxonomy(seqtab.nochim, "~/tax/silva_nr99_v138_train_set.fa.gz", multithread=TRUE)
 ```
 
 ```{r}
@@ -157,18 +142,21 @@ taxa.print <- taxa # Removing sequence rownames for display only
 rownames(taxa.print) <- NULL
 head(taxa.print)
 ```
+Bacteroidota are well represented
 
+#Evaluate accuracy
 ```{r}
 unqs.mock <- seqtab.nochim["Mock",]
 unqs.mock <- sort(unqs.mock[unqs.mock>0], decreasing=TRUE) # Drop ASVs absent in the Mock
 cat("DADA2 inferred", length(unqs.mock), "sample sequences present in the Mock community.\n")
 ```
-
 ```{r}
 mock.ref <- getSequences(file.path(path, "HMP_MOCK.v35.fasta"))
 match.ref <- sum(sapply(names(unqs.mock), function(x) any(grepl(x, mock.ref))))
 cat("Of those,", sum(match.ref), "were exact matches to the expected reference sequences.\n")
 ```
+
+
 
 ```{r}
 if(!requireNamespace("BiocManager")){
