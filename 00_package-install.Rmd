@@ -1,0 +1,32 @@
+---
+title: "metabarcoding with dada2: environment installation"
+output: html_notebook
+---
+# update VM configuration
+``` {bash}
+sudo apt-get update -y 
+sudo apt-get install -y libbz2-dev
+sudo apt-get install -y liblzma-dev
+```
+#package install
+
+Following instruction on https://benjjneb.github.io/dada2/dada-installation.html
+
+```{r package install}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(version = '3.11')
+BiocManager::install("dada2", version = '3.11')
+
+```
+
+
+```{r}
+install.packages("usethis")
+```
+
+```{r}
+library(usethis)
+
+```
+
