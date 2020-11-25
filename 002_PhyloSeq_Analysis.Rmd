@@ -1,0 +1,36 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+#PhyloSeq
+Amplicon bioinformatics : from raw reads to tables
+
+#Loading the data
+```{r}
+ps_connect <-url("https://raw.githubusercontent.com/spholmes/F1000_workflow/master/data/ps.rds")
+ps = readRDS(ps_connect)
+ps
+```
+
+#Taxonomic filtering
+```{r}
+# Show available ranks in the dataset
+rank_names(ps)
+```
+We can see the different rank names.
+
+#Create table, number of features for each phyla
+```{r}
+table(tax_table(ps)[, "Phylum"], exclude = NULL)
+```
+
+"NA" should be remove
+
+```{r}
+ps <- subset_taxa(ps, !is.na(Phylum) & !Phylum %in% c("", "uncharacterized"))
+```
+
+```{r}
+
+```
+
