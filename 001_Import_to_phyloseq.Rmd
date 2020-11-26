@@ -7,12 +7,15 @@ output:
 ---
 
 
-# Import de donnée de Dada2 vers PhyloSeq
+# Imports de donnée de Dada2 vers PhyloSeq
+
+## Chargement du "Dada2_tutorial"
 
 ```{r}
 load("Dada2_tutorial_FinalEnv")
 ```
 
+## Installation de BiocManager et de phyloseq
 
 ```{r}
 if(!requireNamespace("BiocManager")){
@@ -20,14 +23,16 @@ if(!requireNamespace("BiocManager")){
 }
 BiocManager::install("phyloseq")
 ```
+## Vérification de la version de phyloseq
 ```{r}
 library(phyloseq); packageVersion("phyloseq")
 ```
-
+## Vérification de la version de Biostrings
 ```{r}
 library(Biostrings); packageVersion("Biostrings")
 ```
 
+## Vérification et importation de ggplot2
 ```{r}
 library(ggplot2); packageVersion("ggplot2")
 ```
@@ -63,7 +68,7 @@ taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
 ps
 ```
 
-#Vizualize alpha-diversity
+# Vizualize alpha-diversity
 
 ```{r}
 plot_richness(ps, x="Day", measures=c("Shannon", "Simpson"), color="When")
