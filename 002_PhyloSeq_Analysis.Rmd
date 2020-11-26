@@ -200,3 +200,16 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install(version = "3.12")
 ```
 
+# Âge des souris
+```{r}
+qplot(sample_data(ps)$age, geom = "histogram",binwidth=20) + xlab("age")
+```
+Histogramme des groupes d'âge
+
+
+```{r}
+qplot(log10(rowSums(otu_table(ps))),binwidth=0.2) +
+  xlab("Logged counts-per-sample")
+```
+
+
