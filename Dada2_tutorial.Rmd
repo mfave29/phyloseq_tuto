@@ -1,29 +1,31 @@
 ---
 title: "Dada2 tutorial"
 output:
-  github_document: default
+  github_document:
+    toc: TRUE
+    tic_depth: 2
 ---
 
-
+# Importation de phyloseq
 ```{r}
 library(phyloseq)
 ```
 
 
-#Loading the dada2 package
+# Chargement de dada2
 ```{r}
 library(dada2); packageVersion("dada2")
 ```
 On voit la version du package de dada2 (1.16.0)
 
 
-#Chargement des fichiers fastq à partir du séquençage d'amplicons de la région V4 de l'ARN 16S de souris générés par la technique de Illumina MiSeq. On a défini le chemin. 
+# Chargement des fichiers fastq à partir du séquençage d'amplicons de la région V4 de l'ARN 16S de souris générés par la technique de Illumina MiSeq. On a défini le chemin. 
 ```{r}
 path <- "~/MiSeq_SOP" # CHANGE ME to the directory containing the fastq files after unzipping.
 list.files(path)
 ```
 
-#Forward and Reverse
+# Forward and Reverse
 ```{r}
 # Forward and reverse fastq filenames have format: SAMPLENAME_R1_001.fastq and SAMPLENAME_R2_001.fastq
 fnFs <- sort(list.files(path, pattern="_R1_001.fastq", full.names = TRUE))
@@ -33,11 +35,13 @@ sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
 ```
 
 
-#Quality Score
+# Profils de score de qualité des Forward
 ```{r}
 plotQualityProfile(fnFs[1:2])
 ```
 Nous obtenons les profils des scores de qualité en fonction du nombre de cycle des fichiers fastq des forward reads.
+
+# Profils de score de qualité des Reverse
 
 ```{r}
 plotQualityProfile(fnRs[1:2])
@@ -45,7 +49,7 @@ plotQualityProfile(fnRs[1:2])
 Nous obtenons les profils des scores de qualité en fonction du nombre de cycle des fichiers fastq des reverse reads. On remarque que ces reverse reads sont de moins bonne qualité que les forward. 
 
 
-#Filtering and trimming
+# Filtering and trimming
 ```{r}
 # Place filtered files in filtered/ subdirectory
 filtFs <- file.path(path, "filtered", paste0(sample.names, "_F_filt.fastq.gz"))
@@ -64,7 +68,7 @@ head(out)
 Cela permet de filtrer les données selon un taux maximal d'acceptation d'erreurs. On a donné des reads, et ceux qui sont sortis sont ceux que l'on garde.
 
 
-#Errors Rates
+# Taux des erreurs
 ```{r}
 errF <- learnErrors(filtFs, multithread=TRUE)
 ```
@@ -73,12 +77,12 @@ errF <- learnErrors(filtFs, multithread=TRUE)
 errR <- learnErrors(filtRs, multithread=TRUE)
 ```
 
-#Learn the Error Rates - Visualization
+## Visualisation du taux d'erreur
 ```{r}
 plotErrors(errF, nominalQ=TRUE)
 ```
 
-#Sample Inference 20 samples (Forward and Reverse)
+# Inférence des échantillons (Forward and Reverse)
 ```{r}
 dadaFs <- dada(filtFs, err=errF, multithread=TRUE)
 ```
@@ -92,14 +96,15 @@ dadaFs[[1]]
 ```
 Cela permet de visualiser les vrais variants à partir de séquences uniques. 
 
-#Merge paired reads - Denoising
+
+# Merge paired reads - Denoising
 ```{r}
 mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose=TRUE)
 # Inspect the merger data.frame from the first sample
 head(mergers[[1]])
 ```
 
-#Construct Sequence Table - Amplicon Sequence Variant Table
+# Construction de table des variants des séquences d'amplicons
 ```{r}
 seqtab <- makeSequenceTable(mergers)
 dim(seqtab)
@@ -110,7 +115,8 @@ dim(seqtab)
 table(nchar(getSequences(seqtab)))
 ```
 
-#Remove chimeras
+
+# Elimination des chimères
 ```{r}
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
 dim(seqtab.nochim)
@@ -119,9 +125,9 @@ dim(seqtab.nochim)
 ```{r}
 sum(seqtab.nochim)/sum(seqtab)
 ```
-Chimeras account about 4% merged sequence reads when we account for the abundance of variants.
+Les chimères sont de 4% des reads de séquences fusionnées quand on prend en compte l'abondance des variants.
 
-#Track reads through the pipeline
+# Track reads through the pipeline
 ```{r}
 getN <- function(x) sum(getUniques(x))
 track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim))
@@ -130,10 +136,11 @@ colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "n
 rownames(track) <- sample.names
 head(track)
 ```
-Sanity check
-There is not too much loss
+On a fait un contrôle de qualité. Il n'y a pas tellement de perte.
 
-#Assign taxonomy
+
+# Assigner une taxonomie
+## Importation 
 ```{bash}
 wget https://zenodo.org/record/3986799/files/silva_nr99_v138_train_set.fa.gz
 ```
