@@ -313,7 +313,198 @@ plot_ordination(pslog, out.wuf.log, color = "age_binned",
 ```
 
 # PCA sur les rangs
-On ignore les abondances brutes et on remplace avec des rangs car il peut être difficile 
+On ignore les abondances brutes et on remplace avec des rangs car il peut être difficile d'identifier une transformation qui ramène les données à la normalité. On utilise une version transformée par rang de données pour effectuer l'ACP. Création matrice représentant les abondances par rang où le microbe avec le plus petit dans un échantillon est mappé au rang 1, au deuxième rang le plus petit 2, etc.
+
+```{r}
+library(phyloseq)
+```
+
+```{r}
+abund <- otu_table(pslog)
+abund_ranks <- t(apply(abund, 1, rank))
+```
+
+```{r}
+abund_ranks <- abund_ranks - 329
+abund_ranks[abund_ranks < 1] <- 1
+```
+Ici, on a fait le choix où les microbes dont le rang est inférieur à un certain seuil doivent être liés à 1.
+
+```{r}
+library(ggplot2)
+```
+
+
+```{r}
+library(dplyr)
+library(reshape2)
+abund_df <- melt(abund, value.name = "abund") %>%
+  left_join(melt(abund_ranks, value.name = "rank"))
+colnames(abund_df) <- c("sample", "seq", "abund", "rank")
+
+abund_df <- melt(abund, value.name = "abund") %>%
+  left_join(melt(abund_ranks, value.name = "rank"))
+colnames(abund_df) <- c("sample", "seq", "abund", "rank")
+
+sample_ix <- sample(1:nrow(abund_df), 8)
+ggplot(abund_df %>%
+         filter(sample %in% abund_df$sample[sample_ix])) +
+  geom_point(aes(x = abund, y = rank, col = sample),
+             position = position_jitter(width = 0.2), size = 1.5) +
+  labs(x = "Abundance", y = "Thresholded rank") +
+  scale_color_brewer(palette = "Set2")
+```
+Graphique : transformation du seuil de rang
+
+## On peut maintenant faire une PCA.
+
+```{r}
+library(ade4)
+ranks_pca <- dudi.pca(abund_ranks, scannf = F, nf = 3)
+row_scores <- data.frame(li = ranks_pca$li,
+                         SampleID = rownames(abund_ranks))
+col_scores <- data.frame(co = ranks_pca$co,
+                         seq = colnames(abund_ranks))
+tax <- tax_table(ps) %>%
+  data.frame(stringsAsFactors = FALSE)
+tax$seq <- rownames(tax)
+main_orders <- c("Clostridiales", "Bacteroidales", "Lactobacillales",
+                 "Coriobacteriales")
+tax$Order[!(tax$Order %in% main_orders)] <- "Other"
+tax$Order <- factor(tax$Order, levels = c(main_orders, "Other"))
+tax$otu_id <- seq_len(ncol(otu_table(ps)))
+row_scores <- row_scores %>%
+  left_join(sample_data(pslog))
+col_scores <- col_scores %>%
+  left_join(tax)
+```
+
+```{r}
+evals_prop <- 100 * (ranks_pca$eig / sum(ranks_pca$eig))
+ggplot() +
+  geom_point(data = row_scores, aes(x = li.Axis1, y = li.Axis2), shape = 2) +
+  geom_point(data = col_scores, aes(x = 25 * co.Comp1, y = 25 * co.Comp2, col = Order),
+             size = .3, alpha = 0.6) +
+  scale_color_brewer(palette = "Set2") +
+  facet_grid(~ age_binned) +
+  guides(col = guide_legend(override.aes = list(size = 3))) +
+  labs(x = sprintf("Axis1 [%s%% variance]", round(evals_prop[1], 2)),
+       y = sprintf("Axis2 [%s%% variance]", round(evals_prop[2], 2))) +
+  coord_fixed(sqrt(ranks_pca$eig[2] / ranks_pca$eig[1])) +
+  theme(panel.border = element_rect(color = "#787878", fill = alpha("white", 0)))
+```
+Les résultats sont similaires aux analyses PCoA sans transformation, ainsi nous avons une bonne confiance de l'analyse de nos données.
+
+# Correspondance canonique
+CCpnA : ordination d'une espèce par table d'échantillons.
+Le but de la création de biplots est de déterminer quels types de communautés bactériennes sont les plus importants dans différents types d'échantillons de souris. Il peut être plus facile d'interpréter ces biplots lorsque l'ordre entre les échantillons reflète les caractéristiques de l'échantillon - les variations d'âge ou de statut de portée dans les données de souris, par exemple - et cela est au cœur de la conception de CCpnA.
+
+```{r}
+ps_ccpna <- ordinate(pslog, "CCA", formula = pslog ~ age_binned + family_relationship)
+```
+
+```{r}
+library(ggrepel)
+ps_scores <- vegan::scores(ps_ccpna)
+sites <- data.frame(ps_scores$sites)
+sites$SampleID <- rownames(sites)
+sites <- sites %>%
+  left_join(sample_data(ps))
+
+species <- data.frame(ps_scores$species)
+species$otu_id <- seq_along(colnames(otu_table(ps)))
+species <- species %>%
+  left_join(tax)
+evals_prop <- 100 * ps_ccpna$CCA$eig[1:2] / sum(ps_ccpna$CA$eig)
+ggplot() +
+  geom_point(data = sites, aes(x = CCA1, y = CCA2), shape = 2, alpha = 0.5) +
+  geom_point(data = species, aes(x = CCA1, y = CCA2, col = Order), size = 0.5) +
+  geom_text_repel(data = species %>% filter(CCA2 < -2),
+                    aes(x = CCA1, y = CCA2, label = otu_id),
+            size = 1.5, segment.size = 0.1) +
+  facet_grid(. ~ family_relationship) +
+  guides(col = guide_legend(override.aes = list(size = 3))) +
+  labs(x = sprintf("Axis1 [%s%% variance]", round(evals_prop[1], 2)),
+        y = sprintf("Axis2 [%s%% variance]", round(evals_prop[2], 2))) +
+  scale_color_brewer(palette = "Set2") +
+  coord_fixed(sqrt(ps_ccpna$CCA$eig[2] / ps_ccpna$CCA$eig[1])*0.45   ) +
+  theme(panel.border = element_rect(color = "#787878", fill = alpha("white", 0)))
+```
+
+# Supervised learning
+
+Diviser les données en ensembles d'apprentissage et de test, les affectations étant effectuées à la souris plutôt que par échantillon, pour garantir que l'ensemble de test simule de manière réaliste la collecte de nouvelles données. Une fois que nous avons divisé les données, nous pouvons utiliser la fonction trainpour ajuster le modèle PLS.
+
+```{r}
+library(caret)
+sample_data(pslog)$age2 <- cut(sample_data(pslog)$age, c(0, 100, 400))
+dataMatrix <- data.frame(age = sample_data(pslog)$age2, otu_table(pslog))
+# take 8 mice at random to be the training set, and the remaining 4 the test set
+trainingMice <- sample(unique(sample_data(pslog)$host_subject_id), size = 8)
+inTrain <- which(sample_data(pslog)$host_subject_id %in% trainingMice)
+training <- dataMatrix[inTrain,]
+testing <- dataMatrix[-inTrain,]
+plsFit <- train(age ~ ., data = training,
+                method = "pls", preProc = "center")
+```
+Nous pouvons prédire les étiquettes de classe sur l'ensemble de test.
+
+```{r}
+plsClasses <- predict(plsFit, newdata = testing)
+table(plsClasses, testing$age)
+```
+
+Prédiction
+```{r}
+library(randomForest)
+rfFit <- train(age ~ ., data = training, method = "rf",
+               preProc = "center", proximity = TRUE)
+rfClasses <- predict(rfFit, newdata = testing)
+table(rfClasses, testing$age)
+```
+```{r}
+library(vegan)
+```
+
+
+
+```{r}
+pls_biplot <- list("loadings" = loadings(plsFit$finalModel),
+                   "scores" = scores(plsFit$finalModel))
+class(pls_biplot$scores) <- "matrix"
+
+pls_biplot$scores <- data.frame(sample_data(pslog)[inTrain, ],
+                                pls_biplot$scores)
+
+tax <- tax_table(ps)@.Data %>%
+  data.frame(stringsAsFactors = FALSE)
+main_orders <- c("Clostridiales", "Bacteroidales", "Lactobacillales",
+                 "Coriobacteriales")
+tax$Order[!(tax$Order %in% main_orders)] <- "Other"
+tax$Order <- factor(tax$Order, levels = c(main_orders, "Other"))
+class(pls_biplot$loadings) <- "matrix"
+pls_biplot$loadings <- data.frame(tax, pls_biplot$loadings)
+```
+
+```{r}
+ggplot() +
+  geom_point(data = pls_biplot$scores,
+             aes(x = Comp.1, y = Comp.2), shape = 2) +
+  geom_point(data = pls_biplot$loadings,
+             aes(x = 25 * Comp.1, y = 25 * Comp.2, col = Order),
+             size = 0.3, alpha = 0.6) +
+  scale_color_brewer(palette = "Set2") +
+  labs(x = "Axis1", y = "Axis2", col = "Binned Age") +
+  guides(col = guide_legend(override.aes = list(size = 3))) +
+  facet_grid( ~ age2) +
+  theme(panel.border = element_rect(color = "#787878", fill = alpha("white", 0)))
+```
+Figure : PLS produit une représentation biplot conçue pour séparer les échantillons par une variable de réponse
+
+La projection est choisie avec une référence explicite à la variable d'âge regroupée. Plus précisément, PLS identifie un sous-espace pour maximiser la discrimination entre les classes, et le biplot affiche des projections d'échantillons et des coefficients ASV par rapport à ce sous-espace.
+
+
+
 
 
 
