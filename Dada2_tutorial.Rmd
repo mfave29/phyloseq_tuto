@@ -154,9 +154,9 @@ taxa.print <- taxa # Removing sequence rownames for display only
 rownames(taxa.print) <- NULL
 head(taxa.print)
 ```
-Bacteroidota are well represented
+Les Bactéroidetes sont très bien représentés dans l'échantillon.
 
-#Evaluate accuracy
+# Evaluer la précision
 ```{r}
 unqs.mock <- seqtab.nochim["Mock",]
 unqs.mock <- sort(unqs.mock[unqs.mock>0], decreasing=TRUE) # Drop ASVs absent in the Mock

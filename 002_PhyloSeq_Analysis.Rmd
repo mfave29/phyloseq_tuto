@@ -8,26 +8,29 @@ output:
 # PhyloSeq
 Amplicon bioinformatics : from raw reads to tables
 
-## Loading the data
+## Chargement des données à partir d'un jeu de données
 ```{r}
 ps_connect <-url("https://raw.githubusercontent.com/spholmes/F1000_workflow/master/data/ps.rds")
 ps = readRDS(ps_connect)
 ps
 ```
+Il y a 389 taxa et 360 échantillons, se regroupant en 6 rangs taxonomiques. 
+
 
 ## Taxonomic filtering
 ```{r}
 # Show available ranks in the dataset
 rank_names(ps)
 ```
-We can see the different rank names.
+On voit le noms du classement des espèces.
+
 
 ## Create table, number of features for each phyla
 ```{r}
 table(tax_table(ps)[, "Phylum"], exclude = NULL)
 ```
+Les non-identifiés doivent être éliminés.
 
-"NA" should be remove
 
 ```{r}
 ps <- subset_taxa(ps, !is.na(Phylum) & !Phylum %in% c("", "uncharacterized"))
@@ -47,9 +50,10 @@ prevdf = data.frame(Prevalence = prevdf,
 ```{r}
 plyr::ddply(prevdf, "Phylum", function(df1){cbind(mean(df1$Prevalence),sum(df1$Prevalence))})
 ```
-We can see the phyla prevalence.
+Nous voyons la prévalence des phyla. 
 
 ## Filtering
+
 ```{r}
 # Define phyla to filter
 filterPhyla = c("Fusobacteria", "Deinococcus-Thermus")
@@ -57,8 +61,10 @@ filterPhyla = c("Fusobacteria", "Deinococcus-Thermus")
 ps1 = subset_taxa(ps, !Phylum %in% filterPhyla)
 ps1
 ```
+Il s'agit d'une étape de filtrage.
 
 ## Prevalence Filtering
+
 ## Unsupervised. This filtering step can be applied even in settings where taxonomic annotation is unavailable or unreliable.
 ```{r}
 # Subset to the remaining phyla
@@ -69,12 +75,10 @@ ggplot(prevdf1, aes(TotalAbundance, Prevalence / nsamples(ps),color=Phylum)) +
   scale_x_log10() +  xlab("Total Abundance") + ylab("Prevalence [Frac. Samples]") +
   facet_wrap(~Phylum) + theme(legend.position="none")
 ```
-We explore the relationship of prevalence and total read count for each feature
+Figure : prévalence des taxons en rapport avec le total. Nous voyons que la prévalence des Firmicutes est très importante. Aucune séparation naturelle n'est immédiatement évidente. Ce serait bien de définir un seuil de prévalence dans un intervalle entre 0 et 10%.
 
-Figure : Taxa prevalence versus total counts
-No natural separation is immediately evident. It could be reasonably to define a prevalence threshold in a range of zero to ten percent or so. 
 
-## Define prevalence threshold ad 5% of total samples
+## Définition du seuil de prévalence à 0.5 % des échantillons totaux.
 ```{r}
 prevalenceThreshold = 0.05 * nsamples(ps)
 prevalenceThreshold
@@ -86,16 +90,18 @@ ps2 = prune_taxa(keepTaxa, ps)
 
 
 
-## Agglomerate taxa
-Useful to agglomerate the data features corresponding to closely related data when there is known to be a lot of species or sub-species functional redundancy in a community.
-Taxonomic agglomeration has the advantage of being much easier to define ahead of time. 
+## Agglomération
+Il est utilie d'agglomérer les caractéristiques correspondant aux données étroitement en lien car on sait qu'il y a beaucoup d'espèces ou de sous-espèces redondantes d'un point de vue fonctionnel dans une communauté. 
+L'agglomération taxonomique a l'avantage d'être plus facile pour définir en avance.
+
 
 ## Combine all features that descend from the same genus
-How many genera would be present after filtering ?
+Combien de genres seront présents après une étape de filtration ?
+
 ```{r}
 length(get_taxa_unique(ps2, taxonomic.rank = "Genus"))
 ```
-There are 49 genera who would be present after filtering.
+Il y a 59 genres qui seront présents après le filtrage. 
 
 ```{r}
 ps3 = tax_glom(ps2, "Genus", NArm = TRUE)
