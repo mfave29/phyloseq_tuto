@@ -107,12 +107,14 @@ Il y a 59 genres qui seront présents après le filtrage.
 ps3 = tax_glom(ps2, "Genus", NArm = TRUE)
 ```
 
+Définition d'une distance phylogénétique de 0.4 pour analyse.
 
-A tree height corresponding to the phylogenetic distance between features that should define their grouping.
 ```{r}
 h1 = 0.4
 ps4 = tip_glom(ps2, h = h1)
 ```
+
+plot_tree de phyloseq permet de comparer les données originales non filtrées, l'arbre avant et l'arbre après l'agglomération.
 
 ```{r}
 multiPlotTitleTextSize = 15
@@ -128,6 +130,7 @@ p4tree = plot_tree(ps4, method = "treeonly",
   theme(plot.title = element_text(size = multiPlotTitleTextSize))
 ```
 
+## Installation du package gridExtra pour avoir grid.arrange permettant le regroupement
 ```{r}
 install.packages("gridExtra")
 ```
@@ -135,13 +138,13 @@ install.packages("gridExtra")
 ```{r}
 grid.arrange(nrow = 1, p2tree, p3tree, p4tree)
 ```
-On the left : original tree
-In the middle : Genus rank
-On the right : phylogenetic agglomeration at a fixed distance of 0.4
+Sur la gauche, on voit l'arbre original, au milieu celui des rangs des genres et à droite l'agglomération phylogénétique avec la distance phylogénétique de 0.4.
 
-## Abundance value transformation
+
+## Transformation de la valeur d'abondance
+Transformation des données du microbiome pour tenir compte de différents paramètres (taille de la library, la variance, l'échelle...).
 Transform microbiome count data to account for differences in library size, variance, scale, etc.
-Relative abundance graphic. 
+On veut un graphique d'abondance relative. 
 
 ```{r}
 plot_abundance = function(physeq,title = "",
@@ -160,7 +163,7 @@ plot_abundance = function(physeq,title = "",
 }
 ```
 
-## Transform to relative abundance
+## Transformation de l'abondance relative 
 ```{r}
 ps3ra = transform_sample_counts(ps3, function(x){x / sum(x)})
 ```
@@ -171,9 +174,10 @@ plotAfter = plot_abundance(ps3ra,"")
 # Combine each plot into one graphic.
 grid.arrange(nrow = 2,  plotBefore, plotAfter)
 ```
-Abundance values before and after transformation. Original abundances on the top and relative at the bottom. 
+On obtient les valeurs d'abondance avant et après la transformation. Les abondance originales sont en haut et les abondances relatives en bas.
 
-## Sous-ensemble par la taxonomie
+
+# Sous-ensemble par la taxonomie
 Nous spécifions un rang taxonomique plus précis afin d'expliquer l'abondance bimodale précédente. 
 
 ```{r}
@@ -183,7 +187,7 @@ plot_abundance(psOrd, Facet = "Genus", Color = NULL)
 
 Nous pouvons voir les abondances relatives des Lactobacillales selon le sexe et le genre d'hôte. Nous voyons une abondance relative des Lactobacillus plus importante que celle des Streptococcus. 
 
-
+## Installation des packages pour une analyse statistique plus approfondie
 ```{r}
 .cran_packages <- c( "shiny","miniUI", "caret", "pls", "e1071", "ggplot2", "randomForest", "dplyr", "ggrepel", "nlme", "devtools",
                   "reshape2", "PMA", "structSSI", "ade4",
@@ -206,22 +210,21 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install(version = "3.12")
 ```
 
-# Âge des souris
+## Prétraitement - Âge des souris
 ```{r}
 qplot(sample_data(ps)$age, geom = "histogram",binwidth=20) + xlab("age")
 ```
-Histogramme des groupes d'âge
+Histogramme des groupes d'âge, 3 parties distinctes
 
 
 ```{r}
 qplot(log10(rowSums(otu_table(ps))),binwidth=0.2) +
   xlab("Logged counts-per-sample")
 ```
-
- Histogrammes comparant les profondeurs de lecture brutes et transformées
+ Histogramme comparant les profondeurs de lecture brutes et transformées. La transformation pourrait être suffisante par normalisation des données d'abondance. En fait, elle ne l'est pas et donc, nous faisons une transformation de stabilisation de la variance.
  
  
- 
+## Analyse en PCoA avec Bray-Curtis
 ```{r}
 sample_data(ps)$age_binned <- cut(sample_data(ps)$age,
                           breaks = c(0, 100, 200, 400))
@@ -234,19 +237,20 @@ plot_ordination(pslog, out.wuf.log, color = "age_binned") +
   labs(col = "Binned Age") +
   coord_fixed(sqrt(evals[2] / evals[1]))
 ```
- Analyse d'ordination avec le log d'abondance
+ Analyse d'ordination avec le log d'abondance. On retrouve des aberrances. Il s'agit des échantillons des femelles 5 et 6 au jour 165 et des échantillons des mâles 3, 4, 5 et 6 au jour 175. Nous les retirerons, car nous nous intéressons principalement aux relations entre les non- points aberrants.
  
- 
+Vérification des valeur aberrantes des femelles.
+
 ```{r}
 rel_abund <- t(apply(otu_table(ps), 1, function(x) x / sum(x)))
 qplot(rel_abund[, 12], geom = "histogram",binwidth=0.05) +
   xlab("Relative abundance")
 ```
- Les échantillons aberrants sont dominés par un seul ASV
+ Les échantillons aberrants sont dominés par un seul ASV.
  
  
 # Projections d'ordination
-Calcul des ordinations
+Calcul des ordinations avec les valeurs aberrantes supprimées.
 ```{r}
 outliers <- c("F5D165", "F6D165", "M3D175", "M4D175", "M5D175", "M6D175")
 ps <- prune_samples(!(sample_names(ps) %in% outliers), ps)
@@ -273,6 +277,7 @@ plot_ordination(pslog, out.pcoa.log, color = "age_binned",
   coord_fixed(sqrt(evals[2] / evals[1]))
 ```
 PcoA - Bray-Curtis
+On voit un 
 
 
 ```{r}
