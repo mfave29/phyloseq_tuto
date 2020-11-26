@@ -1,9 +1,14 @@
 ---
 title: "Dada2 tutorial"
 output:
-  pdf_document: default
-  html_notebook: default
+  github_document: default
 ---
+
+
+```{r}
+library(phyloseq)
+```
+
 
 #Loading the dada2 package
 ```{r}
@@ -437,6 +442,9 @@ git commit -m "A commit from my local computer"
 git push
 ```
 
+```{r}
+save.image(file = "Dada2_tutorial_FinalEnv")
+```
 
 
 

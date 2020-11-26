@@ -212,4 +212,72 @@ qplot(log10(rowSums(otu_table(ps))),binwidth=0.2) +
   xlab("Logged counts-per-sample")
 ```
 
+ Histogrammes comparant les profondeurs de lecture brutes et transformées
+ 
+ 
+ 
+```{r}
+sample_data(ps)$age_binned <- cut(sample_data(ps)$age,
+                          breaks = c(0, 100, 200, 400))
+levels(sample_data(ps)$age_binned) <- list(Young100="(0,100]", Mid100to200="(100,200]", Old200="(200,400]")
+sample_data(ps)$family_relationship=gsub(" ","",sample_data(ps)$family_relationship)
+pslog <- transform_sample_counts(ps, function(x) log(1 + x))
+out.wuf.log <- ordinate(pslog, method = "MDS", distance = "wunifrac")
+evals <- out.wuf.log$values$Eigenvalues
+plot_ordination(pslog, out.wuf.log, color = "age_binned") +
+  labs(col = "Binned Age") +
+  coord_fixed(sqrt(evals[2] / evals[1]))
+```
+ Analyse d'ordination avec le log d'abondance
+ 
+ 
+```{r}
+rel_abund <- t(apply(otu_table(ps), 1, function(x) x / sum(x)))
+qplot(rel_abund[, 12], geom = "histogram",binwidth=0.05) +
+  xlab("Relative abundance")
+```
+ Les échantillons aberrants sont dominés par un seul ASV
+ 
+ 
+# Projections d'ordination
+Calcul des ordinations
+```{r}
+outliers <- c("F5D165", "F6D165", "M3D175", "M4D175", "M5D175", "M6D175")
+ps <- prune_samples(!(sample_names(ps) %in% outliers), ps)
+```
+
+Suppression des échantillons avec moins de 1000 lectures
+```{r}
+which(!rowSums(otu_table(ps)) > 1000)
+```
+Nous avons donc les différents échantillons contnenant moins de 1000 reads.
+
+```{r}
+ps <- prune_samples(rowSums(otu_table(ps)) > 1000, ps)
+pslog <- transform_sample_counts(ps, function(x) log(1 + x))
+```
+
+PCoA en utilisant la dissemblance de Bray-Curtis
+```{r}
+out.pcoa.log <- ordinate(pslog,  method = "MDS", distance = "bray")
+evals <- out.pcoa.log$values[,1]
+plot_ordination(pslog, out.pcoa.log, color = "age_binned",
+                  shape = "family_relationship") +
+  labs(col = "Binned Age", shape = "Litter")+
+  coord_fixed(sqrt(evals[2] / evals[1]))
+```
+PcoA - Bray-Curtis
+
+
+```{r}
+out.dpcoa.log <- ordinate(pslog, method = "DPCoA")
+evals <- out.dpcoa.log$eig
+plot_ordination(pslog, out.dpcoa.log, color = "age_binned", label= "SampleID",
+                  shape = "family_relationship") +
+  labs(col = "Binned Age", shape = "Litter")+
+  coord_fixed(sqrt(evals[2] / evals[1]))
+```
+
+
+
 
