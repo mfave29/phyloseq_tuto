@@ -277,7 +277,7 @@ plot_ordination(pslog, out.pcoa.log, color = "age_binned",
   coord_fixed(sqrt(evals[2] / evals[1]))
 ```
 PcoA - Bray-Curtis
-On voit un 
+On voit qu'il y a un effet d'âge important qui est cohérent.
 
 
 ```{r}
@@ -288,7 +288,32 @@ plot_ordination(pslog, out.dpcoa.log, color = "age_binned", label= "SampleID",
   labs(col = "Binned Age", shape = "Litter")+
   coord_fixed(sqrt(evals[2] / evals[1]))
 ```
+Figure : Un graphique DPCoA incorpore des informations phylogénétiques, mais est dominé par le premier axe.
+Le premier axe explique 75% de la variabilité, environ 9 fois celle du deuxième axe; cela se traduit par la forme allongée du tracé d'ordination.
 
+```{r}
+plot_ordination(pslog, out.dpcoa.log, type = "species", color = "Phylum") +
+  coord_fixed(sqrt(evals[2] / evals[1]))
+```
+Graphique : taxons responsables des axes 1 et 2
+
+## Les positions d'échantillon produites par un PCoA en utilisant Unifrac pondéré
+
+```{r}
+library(grid)
+```
+
+```{r}
+out.wuf.log <- ordinate(pslog, method = "PCoA", distance ="wunifrac")
+evals <- out.wuf.log$values$Eigenvalues
+plot_ordination(pslog, out.wuf.log, color = "age_binned",
+                  shape = "family_relationship") +
+  coord_fixed(sqrt(evals[2] / evals[1])) +
+  labs(col = "Binned Age", shape = "Litter")
+```
+
+# PCA sur les rangs
+On ignore les abondances brutes et on remplace avec des rangs car il peut être difficile 
 
 
 
