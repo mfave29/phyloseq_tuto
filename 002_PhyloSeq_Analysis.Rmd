@@ -835,7 +835,7 @@ Graphique : c'est un triplot PCA où il y a les différents types d'échantillon
 
 
 # Conclusion
-
+Le langage R permet de débruiter, d'identifier et de normaliser des données de séquençage avec des modèles probabilistes avec des paramètres que l'on a choisi. 
 
 
 
