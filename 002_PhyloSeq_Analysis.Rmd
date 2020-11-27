@@ -553,13 +553,293 @@ V(net)$litter <- sampledata[names(V(net)), "family_relationship"]
 ```
 
 ```{r}
-ggplot(net, aes(x = x, y = y, xend = xend, yend = yend), layout = "fruchtermanreingold") +
+ggplot(net_graph, aes(x = x, y = y, xend = xend, yend = yend), layout = "fruchtermanreingold") +
   geom_edges(color = "darkgray") +
   geom_nodes(aes(color = id, shape = litter),  size = 3 ) +
   theme(axis.text = element_blank(), axis.title = element_blank(),
         legend.key.height = unit(0.5,"line")) +
   guides(col = guide_legend(override.aes = list(size = .5)))
 ```
+Graphique : réseau réalisé avec la matrice de dissimilarité de Jaccard. Il y a un regroupement des échantillons par souris et par portée. 
+
+
+# Tests à deux échantillons basés sur des graphiques
+On a proposé l'utilisation d'un arbre MST basé sur les distances entre les échantillons, puis en comptant le nombre d'arêtes sur l'arbre qui se trouvaient entre les échantillons dans différents groupes.
+
+## Minimum Spanning Tree (MST)
+Avec une dissemblance de Jaccard. Nous voulons savoir si les deux portées viennent de la même distribution. 
+```{r}
+gt <- graph_perm_test(ps, "family_relationship", grouping = "host_subject_id",
+                      distance = "jaccard", type = "mst")
+gt$pval
+```
+```{r}
+plotNet1=plot_test_network(gt) + theme(legend.text = element_text(size = 8),
+        legend.title = element_text(size = 9))
+plotPerm1=plot_permutations(gt)
+grid.arrange(ncol = 2,  plotNet1, plotPerm1)
+```
+Graphique et l'histogramme de permutation obtenus à partir de l'arbre couvrant minimal avec similitude Jaccard
+
+Il y a une petite p-value (0.004) et nous rejetons l'hypothèse nulle que les deux échantillons proviennent de la même distribution. 
+A travers l'histogramme, on voit que les échantillons sont groupés par portée plus que ce à quoi nous nous attendrions par hasard.
+
+## Voisins les plus proches
+
+```{r}
+gt <- graph_perm_test(ps, "family_relationship", grouping = "host_subject_id",
+                      distance = "jaccard", type = "knn", knn = 1)
+```
+
+```{r}
+plotNet2=plot_test_network(gt) + theme(legend.text = element_text(size = 8),
+        legend.title = element_text(size = 9))
+plotPerm2=plot_permutations(gt)
+grid.arrange(ncol = 2,  plotNet2, plotPerm2)
+```
+Figure : k=1 nearest-neighbor network and permutation histogram
+
+Si une paire d'échantillons a un lien entre eux dans le graphe du plus proche voisin, ils sont extrêmement susceptibles d'être dans la même 
+
+
+# Modélisation linéaire
+
+Etude de la relation entre la diversité de la communauté microbienne de la souris et la les variables d'âge et de portée.
+
+Calcul de la diversité de Shannon associé à chaque échantillon. 
+```{r}
+library("nlme")
+library("reshape2")
+ps_alpha_div <- estimate_richness(ps, split = TRUE, measure = "Shannon")
+ps_alpha_div$SampleID <- rownames(ps_alpha_div) %>%
+  as.factor()
+ps_samp <- sample_data(ps) %>%
+  unclass() %>%
+  data.frame() %>%
+  left_join(ps_alpha_div, by = "SampleID") %>%
+  melt(measure.vars = "Shannon",
+       variable.name = "diversity_measure",
+       value.name = "alpha_diversity")
+
+# reorder's facet from lowest to highest diversity
+diversity_means <- ps_samp %>%
+  group_by(host_subject_id) %>%
+  summarise(mean_div = mean(alpha_diversity)) %>%
+  arrange(mean_div)
+ps_samp$host_subject_id <- factor(ps_samp$host_subject_id)
+#                                  diversity_means$host_subject_id)
+```
+```{r}
+alpha_div_model <- lme(fixed = alpha_diversity ~ age_binned, data = ps_samp,
+                       random = ~ 1 | host_subject_id)
+```
+
+```{r}
+new_data <- expand.grid(host_subject_id = levels(ps_samp$host_subject_id),
+                        age_binned = levels(ps_samp$age_binned))
+new_data$pred <- predict(alpha_div_model, newdata = new_data)
+X <- model.matrix(eval(eval(alpha_div_model$call$fixed)[-2]),
+                  new_data[-ncol(new_data)])
+pred_var_fixed <- diag(X %*% alpha_div_model$varFix %*% t(X))
+new_data$pred_var <- pred_var_fixed + alpha_div_model$sigma ^ 2
+# fitted values, with error bars
+ggplot(ps_samp %>% left_join(new_data)) +
+  geom_errorbar(aes(x = age_binned, ymin = pred - 2 * sqrt(pred_var),
+                    ymax = pred + 2 * sqrt(pred_var)),
+                col = "#858585", size = .1) +
+  geom_point(aes(x = age_binned, y = alpha_diversity,
+                 col = family_relationship), size = 0.8) +
+  facet_wrap(~host_subject_id) +
+  scale_y_continuous(limits = c(2.4, 4.6), breaks = seq(0, 5, .5)) +
+  scale_color_brewer(palette = "Set2") +
+  labs(x = "Binned Age", y = "Shannon Diversity", color = "Litter") +
+  guides(col = guide_legend(override.aes = list(size = 4))) +
+  theme(panel.border = element_rect(color = "#787878", fill = alpha("white", 0)),
+        axis.text.x = element_text(angle = -90, size = 6),
+        axis.text.y = element_text(size = 6))
+```
+Graphique : diversité de Shannon selon l'échantillon, l'âge sur deux portées différentes. On voit que l'âge joue un rôle sur cette différence de diversité. Il y a plus de diversité pour les souris âgée de 100 à 200. 
+
+
+# Tests multiples hiérarchiques
+On teste l'association entre l'abondance microbienne et l'âge.
+
+```{r}
+library("reshape2")
+library("DESeq2")
+#New version of DESeq2 needs special levels
+sample_data(ps)$age_binned <- cut(sample_data(ps)$age,
+                          breaks = c(0, 100, 200, 400))
+levels(sample_data(ps)$age_binned) <- list(Young100="(0,100]", Mid100to200="(100,200]", Old200="(200,400]")
+sample_data(ps)$family_relationship = gsub(" ", "", sample_data(ps)$family_relationship)
+ps_dds <- phyloseq_to_deseq2(ps, design = ~ age_binned + family_relationship)
+
+# geometric mean, set to zero when all coordinates are zero
+geo_mean_protected <- function(x) {
+  if (all(x == 0)) {
+    return (0)
+  }
+  exp(mean(log(x[x != 0])))
+}
+
+geoMeans <- apply(counts(ps_dds), 1, geo_mean_protected)
+ps_dds <- estimateSizeFactors(ps_dds, geoMeans = geoMeans)
+ps_dds <- estimateDispersions(ps_dds)
+abund <- getVarianceStabilizedData(ps_dds)
+```
+
+Raccourcissement des noms de chaque taxon
+```{r}
+short_names <- substr(rownames(abund), 1, 5)%>%
+  make.names(unique = TRUE)
+rownames(abund) <- short_names
+```
+
+```{r}
+abund_sums <- rbind(data.frame(sum = colSums(abund),
+                               sample = colnames(abund),
+                               type = "DESeq2"),
+                    data.frame(sum = rowSums(otu_table(pslog)),
+                               sample = rownames(otu_table(pslog)),
+                               type = "log(1 + x)"))
+
+ggplot(abund_sums) +
+  geom_histogram(aes(x = sum), binwidth = 20) +
+  facet_grid(type ~ .) +
+  xlab("Total abundance within sample")
+```
+Abondance totale transformée DEseq2 dans chaque échantillon
+
+```{r}
+library("structSSI")
+el <- phy_tree(pslog)$edge
+el0 <- el
+el0 <- el0[nrow(el):1, ]
+el_names <- c(short_names, seq_len(phy_tree(pslog)$Nnode))
+el[, 1] <- el_names[el0[, 1]]
+el[, 2] <- el_names[as.numeric(el0[, 2])]
+unadj_p <- treePValues(el, abund, sample_data(pslog)$age_binned)
+```
+
+La fonction treePvalues permet de tester si ces abondances agrégées sont significativement différentes entre les environnements
+
+```{r}
+hfdr_res <- hFDR.adjust(unadj_p, el, .75)
+summary(hfdr_res)
+```
+
+```{r}
+#interactive part: not run
+plot(hfdr_res, height = 5000) # opens in a browser
+```
+
+La figure qui s'affiche sur une autre page est un sous-arbre avec de nombreuses bactéries différentiellement abondantes. Les noeuds sont colorés selon la p-value en représentant les associations les plus fortes aux plus faibles.
+L'association entre le groupe d'âge et l'abondance bactérienne n'est présente que dans quelques groupes taxonomiques isolés, mais elle est assez forte dans ces groupes.
+
+
+```{r}
+tax <- tax_table(pslog)[, c("Family", "Genus")] %>%
+  data.frame()
+tax$seq <- short_names
+```
+
+```{r}
+options(digits=3)
+hfdr_res@p.vals$seq <- rownames(hfdr_res@p.vals)
+tax %>%
+  left_join(hfdr_res@p.vals) %>%
+  arrange(adjp) %>% head(10)
+```
+
+les bactéries les plus fortement associées appartiennent à la famille des Lachnospiraceae
+
+
+# Techniques polyvalentes
+## Récupération et filtrage des données
+
+On fait une analyse adaptée aussi bien aux comparaisons entre échantillons qu'à l'identification de traits présentant des variations intéressantes.
+
+```{r}
+metab <- read.csv("https://raw.githubusercontent.com/spholmes/F1000_workflow/master/data/metabolites.csv",row.names = 1)
+microbe_connect <-url("https://raw.githubusercontent.com/spholmes/F1000_workflow/master/data/microbe.rda")
+load(microbe_connect)
+microbe
+```
+
+```{r}
+library("genefilter")
+keep_ix <- rowSums(metab == 0) <= 3
+metab <- metab[keep_ix, ]
+microbe <- prune_taxa(taxa_sums(microbe) > 4, microbe)
+microbe <- filter_taxa(microbe, filterfun(kOverA(3, 2)), TRUE)
+metab <- log(1 + metab, base = 10)
+X <- otu_table(microbe)
+X[X > 50] <- 50
+dim(X)
+```
+
+```{r}
+dim(metab)
+```
+X et metab ont 12 colonnes, ce sont les échantillons. On fait ensuite une CCA où il peut y avoir des ensembles d'entités dans des tables de données de grande dimension, où il peut y avoir plus d'entités mesurées que d'échantillons.
+
+```{r}
+library(PMA)
+cca_res <- CCA(t(X),  t(metab), penaltyx = .15, penaltyz = .15)
+```
+
+```{r}
+cca_res
+```
+
+5 microorganismes et 15 métabolites ont été sélectionnés, selon leur capacité à expliquer les covariations. Il y a une corrélation de 0,974 entre les deux tableaux. Les données microbiennes et métaboliques reflètent des signaux sous-jacents similaires.
+
+
+```{r}
+combined <- cbind(t(X[cca_res$u != 0, ]),
+                  t(metab[cca_res$v != 0, ]))
+pca_res <- dudi.pca(combined, scannf = F, nf = 3)
+```
+
+```{r}
+genotype <- substr(rownames(pca_res$li), 1, 2)
+sample_type <- substr(rownames(pca_res$l1), 3, 4)
+feature_type <- grepl("\\.", colnames(combined))
+feature_type <- ifelse(feature_type, "Metabolite", "OTU")
+sample_info <- data.frame(pca_res$li, genotype, sample_type)
+feature_info <- data.frame(pca_res$c1,
+                           feature = substr(colnames(combined), 1, 6))
+```
+
+```{r}
+ggplot() +  geom_point(data = sample_info,
+            aes(x = Axis1, y = Axis2, col = sample_type, shape = genotype), size = 3) + 
+  geom_label_repel(data = feature_info,
+                   aes(x = 5.5 * CS1, y = 5.5 * CS2, label = feature, fill = feature_type),
+                   size = 2, segment.size = 0.3,
+                   label.padding = unit(0.1, "lines"), label.size = 0) +
+  geom_point(data = feature_info,
+             aes(x = 5.5 * CS1, y = 5.5 * CS2, fill = feature_type),
+             size = 1, shape = 23, col = "#383838") +
+  scale_color_brewer(palette = "Set2") +
+  scale_fill_manual(values = c("#a6d854", "#e78ac3")) +
+  guides(fill = guide_legend(override.aes = list(shape = 32, size = 0))) +
+  coord_fixed(sqrt(pca_res$eig[2] / pca_res$eig[2])) +
+  labs(x = sprintf("Axis1 [%s%% Variance]",
+                   100 * round(pca_res$eig[1] / sum(pca_res$eig), 2)),
+       y = sprintf("Axis2 [%s%% Variance]",
+                   100 * round(pca_res$eig[2] / sum(pca_res$eig), 2)),
+       fill = "Feature Type", col = "Sample Type")
+```
+Graphique : c'est un triplot PCA où il y a les différents types d'échantillons et les caractéristiques multidomaines (métabolites et OTU). On peut donc comparer les échantillons et on peut caractériser l'influence des caractéristiques.
+
+
+# Conclusion
+
+
+
+
+
 
 
 
