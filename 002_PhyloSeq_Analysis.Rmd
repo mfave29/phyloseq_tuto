@@ -568,6 +568,8 @@ library(igraph)
 library(ggnetwork)
 library(ggplot.multistats)
 library(network)
+library(nnet)
+library(netCoin)
 ```
 
 
