@@ -68,6 +68,11 @@ Il s'agit d'une étape de filtrage.
 ## Filtrage de prévalence
 
 Non supervisée. Cette étape de filtrage peut être appliquée même dans des contextes où l'annotation taxinomique n'est pas disponible ou n'est pas fiable.
+
+```{r}
+library(ggplot2)
+```
+
 ```{r}
 # Subset to the remaining phyla
 prevdf1 = subset(prevdf, Phylum %in% get_taxa_unique(ps1, "Phylum"))
@@ -137,6 +142,11 @@ p4tree = plot_tree(ps4, method = "treeonly",
 ```{r}
 install.packages("gridExtra")
 ```
+```{r}
+library(gridExtra)
+```
+
+
 
 ```{r}
 grid.arrange(nrow = 1, p2tree, p3tree, p4tree)
@@ -551,6 +561,15 @@ sampledata <- data.frame(sample_data(ps))
 V(net)$id <- sampledata[names(V(net)), "host_subject_id"]
 V(net)$litter <- sampledata[names(V(net)), "family_relationship"]
 ```
+
+```{r}
+library(ggplot2)
+library(igraph)
+library(ggnetwork)
+library(ggplot.multistats)
+library(network)
+```
+
 
 ```{r}
 ggplot(net_graph, aes(x = x, y = y, xend = xend, yend = yend), layout = "fruchtermanreingold") +
