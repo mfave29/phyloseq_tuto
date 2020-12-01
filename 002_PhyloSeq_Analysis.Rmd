@@ -552,6 +552,9 @@ L'espèce appartenant au genre Rosbeuria est le microorganisme qui a le plus d'i
 
 Création d'un réseau avec la dissimilarité de Jaccard à .35. On ajoute un attribut aux sommets en indiquant de quelle souris provient l'échantillon et de quelle portée se trouvait la souris. 
 
+
+
+
 ```{r}
 library("phyloseqGraphTest")
 library("igraph")
@@ -560,20 +563,8 @@ net <- make_network(ps, max.dist=0.35)
 sampledata <- data.frame(sample_data(ps))
 V(net)$id <- sampledata[names(V(net)), "host_subject_id"]
 V(net)$litter <- sampledata[names(V(net)), "family_relationship"]
-```
 
-```{r}
-library(ggplot2)
-library(igraph)
-library(ggnetwork)
-library(ggplot.multistats)
-library(network)
-library(nnet)
-library(netCoin)
-```
-
-
-```{r}
+net_graph <- ggnetwork(net)
 ggplot(net_graph, aes(x = x, y = y, xend = xend, yend = yend), layout = "fruchtermanreingold") +
   geom_edges(color = "darkgray") +
   geom_nodes(aes(color = id, shape = litter),  size = 3 ) +
@@ -581,6 +572,9 @@ ggplot(net_graph, aes(x = x, y = y, xend = xend, yend = yend), layout = "fruchte
         legend.key.height = unit(0.5,"line")) +
   guides(col = guide_legend(override.aes = list(size = .5)))
 ```
+
+
+
 Graphique : réseau réalisé avec la matrice de dissimilarité de Jaccard. Il y a un regroupement des échantillons par souris et par portée. 
 
 
@@ -686,6 +680,7 @@ Graphique : diversité de Shannon selon l'échantillon, l'âge sur deux portées
 On teste l'association entre l'abondance microbienne et l'âge.
 
 ```{r}
+library("BiocGenerics")
 library("reshape2")
 library("DESeq2")
 #New version of DESeq2 needs special levels
