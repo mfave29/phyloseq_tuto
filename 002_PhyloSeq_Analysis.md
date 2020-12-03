@@ -191,6 +191,7 @@ ggplot(prevdf1, aes(TotalAbundance, Prevalence / nsamples(ps),color=Phylum)) +
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
 Figure : prévalence des taxons en rapport avec le total. Nous voyons que
 la prévalence des Firmicutes est très importante. Aucune séparation
 naturelle n’est immédiatement évidente. Ce serait bien de définir un
@@ -283,6 +284,7 @@ grid.arrange(nrow = 1, p2tree, p3tree, p4tree)
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
 Sur la gauche, on voit l’arbre original, au milieu celui des rangs des
 genres et à droite l’agglomération phylogénétique avec la distance
 phylogénétique de 0.4. On peut constater que l’arbre original contenait
@@ -329,6 +331,7 @@ grid.arrange(nrow = 2,  plotBefore, plotAfter)
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+
 On obtient les valeurs d’abondance avant et après la transformation. Les
 abondance originales sont en haut et les abondances relatives en bas. On
 voit les abondances relatives transformées selon le sexe.
@@ -393,6 +396,7 @@ qplot(sample_data(ps)$age, geom = "histogram",binwidth=20) + xlab("age")
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+
 Histogramme des groupes d’âge, 3 parties distinctes
 
 ``` r
@@ -401,6 +405,7 @@ qplot(log10(rowSums(otu_table(ps))),binwidth=0.2) +
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+
 Histogramme comparant les profondeurs de lecture brutes et transformées.
 La transformation pourrait être suffisante par normalisation des données
 d’abondance. En fait, elle ne l’est pas et donc, nous faisons une
@@ -418,7 +423,7 @@ out.wuf.log <- ordinate(pslog, method = "MDS", distance = "wunifrac")
 ```
 
     ## Warning in UniFrac(physeq, weighted = TRUE, ...): Randomly assigning root as --
-    ## GCAAGCGTTATCCGGATTTACTGGGTGTAAAGGGAGCGTAGGCGGTAAGGCAAGTCTGATGTGAAAGGCCAGGGCTCAACCCTGGGACTGCATTGGAAACTGTTTAACTGGAGTGTCGGAGAGGCAAGTGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAGGAACACCAGTGGCGAAGGCGGCTTGCTGGACGATGACTGACGCTGAGGCTCGAAAGCGTGGGGAG
+    ## GCAAGCGTTGTCCGGATTTACTGGGTGTAAAGGGTGCGTAGGCGGCTTTGCAAGTCAGAAGTGAAATCCATGGGCTTAACCCATGAACTGCTTTTGAAACTGCAGAGCTTGAGTGGAGTAGAGGTAGGCGGAATTCCCGGTGTAGCGGTGAAATGCGTAGAGATCGGGAGGAACACCAGTGGCGAAGGCGGCCTGCTGGGCTCTAACTGACGCTGAGGCACGAAAGCGTGGGTAG
     ## -- in the phylogenetic tree in the data you provided.
 
 ``` r
@@ -429,6 +434,7 @@ plot_ordination(pslog, out.wuf.log, color = "age_binned") +
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
+
 Analyse d’ordination avec le log d’abondance. On retrouve des
 aberrances. Il s’agit des échantillons des femelles 5 et 6 au jour 165
 et des échantillons des mâles 3, 4, 5 et 6 au jour 175. Nous les
@@ -444,6 +450,7 @@ qplot(rel_abund[, 12], geom = "histogram",binwidth=0.05) +
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
+
 Les échantillons aberrants sont dominés par un seul ASV (Amplicon
 Sequence Variant).
 
@@ -485,6 +492,7 @@ plot_ordination(pslog, out.pcoa.log, color = "age_binned",
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+
 PcoA - Bray-Curtis On voit qu’il y a un effet d’âge important qui est
 cohérent avec le reste et que les litters ne sont à priori pas
 discriminatoires, du moins il y a un effet de l’âge plus important.
@@ -499,6 +507,7 @@ plot_ordination(pslog, out.dpcoa.log, color = "age_binned", label= "SampleID",
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+
 Figure : Un graphique DPCoA incorpore des informations phylogénétiques,
 mais est dominé par le premier axe. La variabilité en plus de l’âge est
 la composition phylogénétique de chaque échantillon. Le premier axe
@@ -511,6 +520,7 @@ plot_ordination(pslog, out.dpcoa.log, type = "species", color = "Phylum") +
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+
 Graphique : taxons responsables des axes 1 et 2 C’est une analyse en
 fonction des phylum.
 
@@ -527,7 +537,7 @@ out.wuf.log <- ordinate(pslog, method = "PCoA", distance ="wunifrac")
 ```
 
     ## Warning in UniFrac(physeq, weighted = TRUE, ...): Randomly assigning root as --
-    ## GCAAGCGTTATCCGGATTTACTGGGTGTAAAGGGAGCGTAGACGGCAGTGCAAGCCTGGAGTGAAAGGATGGGGCCCAACCCCATGACTGCTCTGGGAACTGTACAGCTAGAGTGCCGGAGGGGTAAGCGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAGGAACACCAGTGGCGAAGGCGGCTTACTGGACGGTAACTGACGTTGAGGCTCGAAAGCGTGGGGAG
+    ## GCAAGCGTTGTCCGGATTCACTGGGCGTAAAGAGCACGTAGGCGGTTATTTAAGTCAGGTGTGAAAGTTTTCGGCTCAACCGGAAAAGTGCACTTGAAACTGGATAACTTGAGAATCGGAGAGGTAAGCGGAATTCCTAGTGTAGCGGTGAAATGCGTAGAGATTAGGAAGAACACCGGTGGCGAAGGCGGCTTACTGGACGATTACTGACGCTGAGGTGCGAAAGCGTGGGGAG
     ## -- in the phylogenetic tree in the data you provided.
 
 ``` r
@@ -539,6 +549,7 @@ plot_ordination(pslog, out.wuf.log, color = "age_binned",
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
+
 Utilisé UniFrac pondéré permet de mesurer quantitativement la
 dissimilitude communautaire qui intègre les relations phylogénétiques
 entre les échantillons.Il y a réellement un effet d’âge.
@@ -622,6 +633,7 @@ ggplot(abund_df %>%
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
+
 Graphique : transformation du seuil de rang. On visualise les abondances
 selon le rang du seuil.
 
@@ -675,6 +687,7 @@ ggplot() +
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
+
 Les résultats sont similaires aux analyses PCoA sans transformation,
 ainsi nous avons une bonne confiance de l’analyse de nos données. On
 voit donc que les triangles (mélange de données) sont rassemblées et que
@@ -772,8 +785,8 @@ table(plsClasses, testing$age)
 
     ##            
     ## plsClasses  (0,100] (100,400]
-    ##   (0,100]        70         0
-    ##   (100,400]       4        46
+    ##   (0,100]        67         1
+    ##   (100,400]       5        45
 
 Prédiction
 
@@ -809,8 +822,8 @@ table(rfClasses, testing$age)
 
     ##            
     ## rfClasses   (0,100] (100,400]
-    ##   (0,100]        72         1
-    ##   (100,400]       2        45
+    ##   (0,100]        70         2
+    ##   (100,400]       2        44
 
 ``` r
 library(vegan)
@@ -860,6 +873,7 @@ ggplot() +
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-50-1.png)<!-- -->
+
 Figure : PLS produit une représentation biplot conçue pour séparer les
 échantillons par une variable de réponse
 
@@ -881,6 +895,7 @@ ggplot(rf_prox) +
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-51-1.png)<!-- -->
+
 Graphique : distance entre les échantillons. Une distance a été calculée
 entre les échantillons en fonction de la fréquence à laquelle
 l’échantillon se produit dans la même partition d’arbre dans un
@@ -905,6 +920,7 @@ ggplot(maxImpDF) +   geom_histogram(aes(x = abund)) +
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-53-1.png)<!-- -->
+
 L’espèce appartenant au genre Rosbeuria est le microorganisme qui a le
 plus d’influence dans la prédiction aléatoire de forest. Son abondance
 est basse dans les âges de 0 à 100 jours et beaucoup plus élevée dans
@@ -994,6 +1010,7 @@ grid.arrange(ncol = 2,  plotNet1, plotPerm1)
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-56-1.png)<!-- -->
+
 Graphique et l’histogramme de permutation obtenus à partir de l’arbre
 couvrant minimal avec similitude Jaccard
 
@@ -1017,6 +1034,7 @@ grid.arrange(ncol = 2,  plotNet2, plotPerm2)
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-58-1.png)<!-- -->
+
 Figure : k=1 nearest-neighbor network and permutation histogram
 
 Si une paire d’échantillons a un lien entre eux dans le graphe du plus
@@ -1100,6 +1118,7 @@ ggplot(ps_samp %>% left_join(new_data)) +
     ## Joining, by = c("host_subject_id", "age_binned")
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-61-1.png)<!-- -->
+
 Graphique : diversité de Shannon selon l’échantillon, l’âge sur deux
 portées différentes. On voit que l’âge joue un rôle sur cette différence
 de diversité. Il y a plus de diversité pour les souris âgée de 100 à
@@ -1316,6 +1335,7 @@ ggplot(abund_sums) +
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-64-1.png)<!-- -->
+
 Abondance totale transformée DEseq2 dans chaque échantillon
 
 ``` r
@@ -1542,6 +1562,7 @@ ggplot() +  geom_point(data = sample_info,
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-77-1.png)<!-- -->
+
 Graphique : c’est un triplot PCA où il y a les différents types
 d’échantillons et les caractéristiques multidomaines (métabolites et
 OTU). On peut donc comparer les échantillons et on peut caractériser
