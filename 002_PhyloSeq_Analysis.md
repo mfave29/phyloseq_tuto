@@ -39,7 +39,6 @@ Analyse - Phyloseq
   - [PCA sur les rangs](#pca-sur-les-rangs)
       - [On peut maintenant faire une
         PCA.](#on-peut-maintenant-faire-une-pca.)
-  - [Correspondance canonique](#correspondance-canonique)
   - [Supervised learning](#supervised-learning)
   - [Analyses basées sur des
     graphiques](#analyses-basées-sur-des-graphiques)
@@ -421,7 +420,7 @@ out.wuf.log <- ordinate(pslog, method = "MDS", distance = "wunifrac")
 ```
 
     ## Warning in UniFrac(physeq, weighted = TRUE, ...): Randomly assigning root as --
-    ## GCAAGCGTTGTCCGGATTTACTGGGTGTAAAGGGCGTGTAGCCGGGCTGACAAGTCAGATGTGAAATCCGGGGGCTCAACCCCCGAACTGCATTTGAAACTGTTGGTCTTGAGTATCGGAGAGGCAGGCGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAGGAACACCAGTGGCGAAGGCGGCCTGCTGGACGACAACTGACGGTGAGGCGCGAAAGCGTGGGGAG
+    ## GCAAGCGTTATCCGGATTTACTGGGTGTAAAGGGAGCGCAGGCGGCAGCGCAAGTCTGATGTGAAAGCCCGGGGCCCAACCGCGGGACTGCATTGGAAACTGCGCAGCTGGAGTGCCGGAGGGGTAAGCGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAGGAACACCAGTGGCGAAGGCGGCTTACTGGACGGCAACTGACGCTGAGGCTCGAAAGCGTGGGGAG
     ## -- in the phylogenetic tree in the data you provided.
 
 ``` r
@@ -489,7 +488,8 @@ plot_ordination(pslog, out.pcoa.log, color = "age_binned",
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 PcoA - Bray-Curtis On voit qu’il y a un effet d’âge important qui est
-cohérent.
+cohérent avec le reste et que les litters ne sont à priori pas
+discriminatoires, du moins il y a un effet de l’âge plus important.
 
 ``` r
 out.dpcoa.log <- ordinate(pslog, method = "DPCoA")
@@ -525,7 +525,7 @@ out.wuf.log <- ordinate(pslog, method = "PCoA", distance ="wunifrac")
 ```
 
     ## Warning in UniFrac(physeq, weighted = TRUE, ...): Randomly assigning root as --
-    ## GCGAGCGTTATCCGGATTTATTGGGTGTAAAGGGTGCGTAGATGGATAAACAAGTTGGTTGTGAAATCCCTCGGCTTAACTGAGGAATTGCAACCAAAACTGTAGATCTTGAGTACTGGAGGGGAAAGCGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAAGAACACCGGTGGCGAAGGCGGCTTTCTGGACAGAAACTGACATTGAGGCACGAAAGTGTGGGGAG
+    ## GCAAGCGTTATCCGGAATTACTGGGTGTAAAGGGTGAGTAGGCGGCATGGTAAGCCAGATGTGAAAGCCTTGGGCTTAACCCGAGGATTGCATTTGGAACTATCAAGCTGGAGTACAGGAGAGGAAAGCGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAAGAACACCAGTGGCGAAGGCGGCTTTCTGGACTGAAACTGACGCTGAGGCACGAAAGCGTGGGGAG
     ## -- in the phylogenetic tree in the data you provided.
 
 ``` r
@@ -674,18 +674,17 @@ ggplot() +
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 Les résultats sont similaires aux analyses PCoA sans transformation,
-ainsi nous avons une bonne confiance de l’analyse de nos données.
-
-# Correspondance canonique
-
-CCpnA : ordination d’une espèce par table d’échantillons. Le but de la
-création de biplots est de déterminer quels types de communautés
-bactériennes sont les plus importants dans différents types
-d’échantillons de souris. Il peut être plus facile d’interpréter ces
-biplots lorsque l’ordre entre les échantillons reflète les
-caractéristiques de l’échantillon - les variations d’âge ou de statut
-de portée dans les données de souris, par exemple - et cela est au cœur
-de la conception de CCpnA.
+ainsi nous avons une bonne confiance de l’analyse de nos données. On
+voit donc que les triangles (mélange de données) sont rassemblées et que
+les ronds sont dispersés. La vraie variance ici est donc l’ordre plutôt
+que la litter par exemple. \# Correspondance canonique CCpnA :
+ordination d’une espèce par table d’échantillons. Le but de la création
+de biplots est de déterminer quels types de communautés bactériennes
+sont les plus importants dans différents types d’échantillons de souris.
+Il peut être plus facile d’interpréter ces biplots lorsque l’ordre entre
+les échantillons reflète les caractéristiques de l’échantillon - les
+variations d’âge ou de statut de portée dans les données de souris, par
+exemple - et cela est au cœur de la conception de CCpnA.
 
 ``` r
 ps_ccpna <- ordinate(pslog, "CCA", formula = pslog ~ age_binned + family_relationship)
@@ -771,8 +770,8 @@ table(plsClasses, testing$age)
 
     ##            
     ## plsClasses  (0,100] (100,400]
-    ##   (0,100]        65         0
-    ##   (100,400]       4        47
+    ##   (0,100]        68         0
+    ##   (100,400]       5        46
 
 Prédiction
 
@@ -808,8 +807,8 @@ table(rfClasses, testing$age)
 
     ##            
     ## rfClasses   (0,100] (100,400]
-    ##   (0,100]        68        14
-    ##   (100,400]       1        33
+    ##   (0,100]        68        10
+    ##   (100,400]       5        36
 
 ``` r
 library(vegan)
