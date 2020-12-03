@@ -776,6 +776,7 @@ les bactéries les plus fortement associées appartiennent à la famille des Lac
 ## Récupération et filtrage des données
 
 On fait une analyse adaptée aussi bien aux comparaisons entre échantillons qu'à l'identification de traits présentant des variations intéressantes.
+12 échantillons ont été obtenus et 20609 OTU mais 96% des entrées du tableau d'abondance microbienne sont nulles. Ainsi, le code ci-dessous récupère et filtre ces données.
 
 ```{r}
 metab <- read.csv("https://raw.githubusercontent.com/spholmes/F1000_workflow/master/data/metabolites.csv",row.names = 1)
@@ -783,7 +784,7 @@ microbe_connect <-url("https://raw.githubusercontent.com/spholmes/F1000_workflow
 load(microbe_connect)
 microbe
 ```
-
+On voit que microbe est un objet phyloseq. On filtre les microbes et les métabolites d'intérêt. Nous les transformons ensuite. 
 ```{r}
 library("genefilter")
 keep_ix <- rowSums(metab == 0) <= 3
