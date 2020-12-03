@@ -302,7 +302,7 @@ plot_ordination(pslog, out.dpcoa.log, color = "age_binned", label= "SampleID",
   labs(col = "Binned Age", shape = "Litter")+
   coord_fixed(sqrt(evals[2] / evals[1]))
 ```
-Figure : Un graphique DPCoA incorpore des informations phylogénétiques, mais est dominé par le premier axe.
+Figure : Un graphique DPCoA incorpore des informations phylogénétiques, mais est dominé par le premier axe. La variabilité en plus de l'âge est la composition phylogénétique de chaque échantillon.
 Le premier axe explique 75% de la variabilité, environ 9 fois celle du deuxième axe; cela se traduit par la forme allongée du tracé d'ordination.
 
 ```{r}
@@ -310,6 +310,9 @@ plot_ordination(pslog, out.dpcoa.log, type = "species", color = "Phylum") +
   coord_fixed(sqrt(evals[2] / evals[1]))
 ```
 Graphique : taxons responsables des axes 1 et 2
+C'est une analyse en fonction des phylum. 
+
+Ainsi, la différence de similarité est due à l'âge et aux phylums. 
 
 ## Les positions d'échantillon produites par un PCoA en utilisant Unifrac pondéré
 
@@ -850,7 +853,8 @@ Graphique : c'est un triplot PCA où il y a les différents types d'échantillon
 
 
 # Conclusion
-Le langage R permet de débruiter, d'identifier et de normaliser des données de séquençage avec des modèles probabilistes avec des paramètres que l'on a choisi. On a pu visualiser les différentes abondances, prévalences
+Le langage R permet de débruiter, d'identifier et de normaliser des données de séquençage avec des modèles probabilistes avec des paramètres que l'on a choisi. On a pu visualiser les différentes abondances, prévalences mais surtout quels étaient les paramètres qui permettaient les différentes variabilités. On a pu constater que l'âge était un critère important pour la variabilité, ce qui a été confirmé avec différentes expériences probabilistes.  
+
 
 
 
