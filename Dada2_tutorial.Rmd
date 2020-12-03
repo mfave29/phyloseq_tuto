@@ -2,8 +2,8 @@
 title: "Dada2 tutorial"
 output:
   github_document:
-    toc: TRUE
-    tic_depth: 2
+    toc: true
+    toc_depth: 2
 ---
 
 # Importation de phyloseq
@@ -13,10 +13,10 @@ library(phyloseq)
 
 
 # Chargement de dada2
-```{r}
+```{r message=TRUE, warning=TRUE}
 library(dada2); packageVersion("dada2")
 ```
-On voit la version du package de dada2 (1.16.0)
+Le package dada2 permet déduire les variantes de séquence et les abondances des échantillons. On voit aussi la version du package de dada2 (1.16.0)
 
 
 # Chargement des fichiers fastq à partir du séquençage d'amplicons de la région V4 de l'ARN 16S de souris générés par la technique de Illumina MiSeq. On a défini le chemin. 
@@ -33,20 +33,20 @@ fnRs <- sort(list.files(path, pattern="_R2_001.fastq", full.names = TRUE))
 # Extract sample names, assuming filenames have format: SAMPLENAME_XXX.fastq
 sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
 ```
-
+On extrait les noms des séquences et on ne garde que les caractères situés avant le premier "_".
 
 # Profils de score de qualité des Forward
 ```{r}
 plotQualityProfile(fnFs[1:2])
 ```
-Nous obtenons les profils des scores de qualité en fonction du nombre de cycle des fichiers fastq des forward reads.
+Nous obtenons les profils des scores de qualité des échantillons F3D1 et F3D0 pour leur Forward.
+
 
 # Profils de score de qualité des Reverse
-
 ```{r}
 plotQualityProfile(fnRs[1:2])
 ```
-Nous obtenons les profils des scores de qualité en fonction du nombre de cycle des fichiers fastq des reverse reads. On remarque que ces reverse reads sont de moins bonne qualité que les forward. 
+Nous obtenons les profils des scores de qualité des reverse des deux échantillons. On remarque que ces reverse reads sont de moins bonne qualité que les forward. 
 
 
 # Filtering and trimming
@@ -57,7 +57,7 @@ filtRs <- file.path(path, "filtered", paste0(sample.names, "_R_filt.fastq.gz"))
 names(filtFs) <- sample.names
 names(filtRs) <- sample.names
 ```
-
+Les reads sont sauvegardés après filtration sous le nom de "filtFs" pour les Forward et "filtRs" pour les Reverse.
 
 ```{r}
 out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=c(240,160),
@@ -65,7 +65,9 @@ out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=c(240,160),
               compress=TRUE, multithread=TRUE) # On Windows set multithread=FALSE
 head(out)
 ```
-Cela permet de filtrer les données selon un taux maximal d'acceptation d'erreurs. On a donné des reads, et ceux qui sont sortis sont ceux que l'on garde.
+On a pris 240pb du R1 et 160pb du R2 car nous voulons un chevauchement bien que les échantillons étaient "épuisés" pour certains.
+
+Cela permet de filtrer les données selon un taux maximal d'acceptation d'erreurs. On a donné des reads, et ceux qui sont sortis sont ceux que l'on garde, les autres sont éliminés.
 
 
 # Taux des erreurs
@@ -81,11 +83,15 @@ errR <- learnErrors(filtRs, multithread=TRUE)
 ```{r}
 plotErrors(errF, nominalQ=TRUE)
 ```
+Nous voyons la fréquence des erreurs, selon par exemple que un "A" soit remplacé par un "C".
 
 # Inférence des échantillons (Forward and Reverse)
 ```{r}
 dadaFs <- dada(filtFs, err=errF, multithread=TRUE)
 ```
+Pour le forward de l'échantillon 1, par exemple, on obtient 7113 reads parmi 1979 séquences uniques. 
+On fait pareil avec les reverse des autres échantillons plus bas.
+
 
 ```{r}
 dadaRs <- dada(filtRs, err=errR, multithread=TRUE)
@@ -98,6 +104,7 @@ Cela permet de visualiser les vrais variants à partir de séquences uniques.
 
 
 # Merge paired reads - Denoising
+Cela permet de faire des superpositions pour trouver les chevauchements.
 ```{r}
 mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose=TRUE)
 # Inspect the merger data.frame from the first sample
@@ -109,18 +116,19 @@ head(mergers[[1]])
 seqtab <- makeSequenceTable(mergers)
 dim(seqtab)
 ```
-
+Il y a 293 séquences uniques différentes les unes par rapport aux autres.
 ```{r}
 # Inspect distribution of sequence lengths
 table(nchar(getSequences(seqtab)))
 ```
-
+Nous voyons la répartition des séquences uniques.
 
 # Elimination des chimères
 ```{r}
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
 dim(seqtab.nochim)
 ```
+Il y a 61 chimères parmi les 293 séquences. 
 
 ```{r}
 sum(seqtab.nochim)/sum(seqtab)
@@ -148,6 +156,7 @@ wget https://zenodo.org/record/3986799/files/silva_nr99_v138_train_set.fa.gz
 ```{r}
 taxa <- assignTaxonomy(seqtab.nochim, "~/silva_nr99_v138_train_set.fa.gz", multithread=TRUE)
 ```
+Nous assignons une taxonomie qu'on enregistre sous le terme de taxa à partir d'un fichier.
 
 ```{r}
 taxa.print <- taxa # Removing sequence rownames for display only
@@ -169,7 +178,7 @@ cat("Of those,", sum(match.ref), "were exact matches to the expected reference s
 ```
 
 
-
+# Installation du package BiocManager et de phyloseq
 ```{r}
 if(!requireNamespace("BiocManager")){
   install.packages("BiocManager")
@@ -227,10 +236,14 @@ ps <- merge_phyloseq(ps, dna)
 taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
 ps
 ```
+Nous rangeons les séquences dans une taxonomie. 
+
 
 ```{r}
 plot_richness(ps, x="Day", measures=c("Shannon", "Simpson"), color="When")
 ```
+Nous voyons que l'alpha-diversité est sensiblement la même, selon qu'on utilise Simpson ou Shannon.
+
 
 ```{r}
 # Transform data to proportions as appropriate for Bray-Curtis distances
@@ -238,6 +251,7 @@ ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))
 ord.nmds.bray <- ordinate(ps.prop, method="NMDS", distance="bray")
 ```
 
+# NMDS Bray
 ```{r}
 plot_ordination(ps.prop, ord.nmds.bray, color="When", title="Bray NMDS")
 ```
@@ -253,44 +267,7 @@ ps.top20 <- prune_taxa(top20, ps.top20)
 plot_bar(ps.top20, x="Day", fill="Family") + facet_wrap(~When, scales="free_x")
 ```
 
-```{r}
-h1 = 0.4
-ps4 = tip_glom(ps2, h = h1)
-```
 
-```{r}
-ps_connect<-url("https://raw.githubusercontent.com/spholmes/F1000_workflow/master/data/ps.rds")
-ps=readRDS(ps_connect)
-ps
-```
-
-```{r}
-library("phyloseqGraphTest")
-library("igraph")
-library("ggnetwork")
-net <- make_network(ps, max.dist=0.35)
-sampledata <- data.frame(sample_data(ps))
-V(net)$id <- sampledata[names(V(net)), "host_subject_id"]
-V(net)$litter <- sampledata[names(V(net)), "family_relationship"]
-```
-
-#Package igraph
-```{r}
-library(igraph)
-```
-
-```{r}
-net_graph <-ggnetwork(net)
-
-```
-```{r}
-ggplot(net_graph, aes(x = x, y = y, xend = xend, yend = yend), layout = "fruchtermanreingold") +
-  geom_edges(color = "darkgray") +
-  geom_nodes(aes(color = id, shape = litter),  size = 3 ) +
-  theme(axis.text = element_blank(), axis.title = element_blank(),
-        legend.key.height = unit(0.5,"line")) +
-  guides(col = guide_legend(override.aes = list(size = .5)))
-```
 
 ```{bash}
 wget https://cran.r-project.org/src/contrib/Archive/structSSI/structSSI_1.1.1.tar.gz
@@ -332,10 +309,6 @@ hfdr_res <- hFDR.adjust(unadj_p, el, .75)
 summary(hfdr_res)
 ```
 
-```{r}
-which git
-## /usr/local/bin/git
-```
 
 ```{bash}
 wget https://github.com/git-for-windows/git/releases/download/v2.29.2.windows.2/Git-2.29.2.2-64-bit.exe
@@ -396,6 +369,7 @@ git clone https://github.com/mfave29/myrepo.git
 ```{r}
 git clone https://github.com/mfave29/myrepo.git
 ```
+
 ```{bash}
 cd myrepo
 ls
