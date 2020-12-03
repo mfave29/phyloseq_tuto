@@ -386,8 +386,6 @@ BiocManager::install(version = "3.12")
     ## Installation path not writeable, unable to update packages: codetools,
     ##   KernSmooth, nlme
 
-    ## Old packages: 'isoband', 'lme4'
-
 ## Prétraitement - Âge des souris
 
 ``` r
@@ -420,7 +418,7 @@ out.wuf.log <- ordinate(pslog, method = "MDS", distance = "wunifrac")
 ```
 
     ## Warning in UniFrac(physeq, weighted = TRUE, ...): Randomly assigning root as --
-    ## GCAAGCGTTATCCGGATTTACTGGGTGTAAAGGGAGCGCAGGCGGCAGCGCAAGTCTGATGTGAAAGCCCGGGGCCCAACCGCGGGACTGCATTGGAAACTGCGCAGCTGGAGTGCCGGAGGGGTAAGCGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAGGAACACCAGTGGCGAAGGCGGCTTACTGGACGGCAACTGACGCTGAGGCTCGAAAGCGTGGGGAG
+    ## GCAAGCGTTATCCGGATTTACTGGGTGTAAAGGGAGCGTAGGCGGTAAGGCAAGTCTGATGTGAAAGGCCAGGGCTCAACCCTGGGACTGCATTGGAAACTGTTTAACTGGAGTGTCGGAGAGGCAAGTGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAGGAACACCAGTGGCGAAGGCGGCTTGCTGGACGATGACTGACGCTGAGGCTCGAAAGCGTGGGGAG
     ## -- in the phylogenetic tree in the data you provided.
 
 ``` r
@@ -502,9 +500,10 @@ plot_ordination(pslog, out.dpcoa.log, color = "age_binned", label= "SampleID",
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
 Figure : Un graphique DPCoA incorpore des informations phylogénétiques,
-mais est dominé par le premier axe. Le premier axe explique 75% de la
-variabilité, environ 9 fois celle du deuxième axe; cela se traduit par
-la forme allongée du tracé d’ordination.
+mais est dominé par le premier axe. La variabilité en plus de l’âge est
+la composition phylogénétique de chaque échantillon. Le premier axe
+explique 75% de la variabilité, environ 9 fois celle du deuxième axe;
+cela se traduit par la forme allongée du tracé d’ordination.
 
 ``` r
 plot_ordination(pslog, out.dpcoa.log, type = "species", color = "Phylum") +
@@ -512,7 +511,10 @@ plot_ordination(pslog, out.dpcoa.log, type = "species", color = "Phylum") +
 ```
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
-Graphique : taxons responsables des axes 1 et 2
+Graphique : taxons responsables des axes 1 et 2 C’est une analyse en
+fonction des phylum.
+
+Ainsi, la différence de similarité est due à l’âge et aux phylums.
 
 ## Les positions d’échantillon produites par un PCoA en utilisant Unifrac pondéré
 
@@ -525,7 +527,7 @@ out.wuf.log <- ordinate(pslog, method = "PCoA", distance ="wunifrac")
 ```
 
     ## Warning in UniFrac(physeq, weighted = TRUE, ...): Randomly assigning root as --
-    ## GCAAGCGTTATCCGGAATTACTGGGTGTAAAGGGTGAGTAGGCGGCATGGTAAGCCAGATGTGAAAGCCTTGGGCTTAACCCGAGGATTGCATTTGGAACTATCAAGCTGGAGTACAGGAGAGGAAAGCGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAAGAACACCAGTGGCGAAGGCGGCTTTCTGGACTGAAACTGACGCTGAGGCACGAAAGCGTGGGGAG
+    ## GCAAGCGTTATCCGGATTTACTGGGTGTAAAGGGAGCGTAGACGGCAGTGCAAGCCTGGAGTGAAAGGATGGGGCCCAACCCCATGACTGCTCTGGGAACTGTACAGCTAGAGTGCCGGAGGGGTAAGCGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAGGAACACCAGTGGCGAAGGCGGCTTACTGGACGGTAACTGACGTTGAGGCTCGAAAGCGTGGGGAG
     ## -- in the phylogenetic tree in the data you provided.
 
 ``` r
@@ -770,8 +772,8 @@ table(plsClasses, testing$age)
 
     ##            
     ## plsClasses  (0,100] (100,400]
-    ##   (0,100]        68         0
-    ##   (100,400]       5        46
+    ##   (0,100]        70         0
+    ##   (100,400]       4        46
 
 Prédiction
 
@@ -807,8 +809,8 @@ table(rfClasses, testing$age)
 
     ##            
     ## rfClasses   (0,100] (100,400]
-    ##   (0,100]        68        10
-    ##   (100,400]       5        36
+    ##   (0,100]        72         1
+    ##   (100,400]       2        45
 
 ``` r
 library(vegan)
@@ -890,7 +892,7 @@ distance.
 as.vector(tax_table(ps)[which.max(importance(rfFit$finalModel)), c("Family", "Genus")])
 ```
 
-    ## [1] "Lachnospiraceae" NA
+    ## [1] "Lachnospiraceae" "Roseburia"
 
 ``` r
 impOtu <- as.vector(otu_table(pslog)[,which.max(importance(rfFit$finalModel))])
@@ -982,7 +984,7 @@ gt <- graph_perm_test(ps, "family_relationship", grouping = "host_subject_id",
 gt$pval
 ```
 
-    ## [1] 0.006
+    ## [1] 0.002
 
 ``` r
 plotNet1=plot_test_network(gt) + theme(legend.text = element_text(size = 8),
@@ -1417,7 +1419,9 @@ des Lachnospiraceae
 
 On fait une analyse adaptée aussi bien aux comparaisons entre
 échantillons qu’à l’identification de traits présentant des variations
-intéressantes.
+intéressantes. 12 échantillons ont été obtenus et 20609 OTU mais 96% des
+entrées du tableau d’abondance microbienne sont nulles. Ainsi, le code
+ci-dessous récupère et filtre ces données.
 
 ``` r
 metab <- read.csv("https://raw.githubusercontent.com/spholmes/F1000_workflow/master/data/metabolites.csv",row.names = 1)
@@ -1430,6 +1434,9 @@ microbe
     ## otu_table()   OTU Table:         [ 20609 taxa and 12 samples ]
     ## tax_table()   Taxonomy Table:    [ 20609 taxa by 6 taxonomic ranks ]
     ## phy_tree()    Phylogenetic Tree: [ 20609 tips and 20607 internal nodes ]
+
+On voit que microbe est un objet phyloseq. On filtre les microbes et les
+métabolites d’intérêt. Nous les transformons ensuite.
 
 ``` r
 library("genefilter")
@@ -1545,4 +1552,7 @@ l’influence des caractéristiques.
 Le langage R permet de débruiter, d’identifier et de normaliser des
 données de séquençage avec des modèles probabilistes avec des
 paramètres que l’on a choisi. On a pu visualiser les différentes
-abondances, prévalences
+abondances, prévalences mais surtout quels étaient les paramètres qui
+permettaient les différentes variabilités. On a pu constater que l’âge
+était un critère important pour la variabilité, ce qui a été confirmé
+avec différentes expériences probabilistes.
