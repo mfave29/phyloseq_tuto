@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "Analyse - Phyloseq"
 output:
   github_document:
     toc: true
@@ -29,7 +29,7 @@ On voit les noms du classement des espèces.
 ```{r}
 table(tax_table(ps)[, "Phylum"], exclude = NULL)
 ```
-On voit le nombre des taxons. Les non-identifiés doivent être éliminés.
+On voit le nombre des taxons. Les non-identifiés doivent être éliminés. On a 327 taxons différents chez les Firmicutes.
 
 
 ```{r}
@@ -53,6 +53,7 @@ prevdf = data.frame(Prevalence = prevdf,
 plyr::ddply(prevdf, "Phylum", function(df1){cbind(mean(df1$Prevalence),sum(df1$Prevalence))})
 ```
 Nous voyons la prévalence des phyla. Deinococcus Thermus est apparu dans un peu plus de un pour cent des échantillons et Fusobactéries dans seulement 2 échantillons. Il faut donc les filtrer.
+Pour donner un exemple, on a 1562 séquences d'Actinobacteries et environ 120 types d'Actinobacteries différentes.
 
 ## Filtrage
 
@@ -63,7 +64,7 @@ filterPhyla = c("Fusobacteria", "Deinococcus-Thermus")
 ps1 = subset_taxa(ps, !Phylum %in% filterPhyla)
 ps1
 ```
-Il s'agit d'une étape de filtrage.
+Il s'agit d'une étape de filtrage, où l'on a supprimé de l'analyse Deinococcus thermus et les Fusobacteria.
 
 ## Filtrage de prévalence
 
@@ -82,7 +83,7 @@ ggplot(prevdf1, aes(TotalAbundance, Prevalence / nsamples(ps),color=Phylum)) +
   scale_x_log10() +  xlab("Total Abundance") + ylab("Prevalence [Frac. Samples]") +
   facet_wrap(~Phylum) + theme(legend.position="none")
 ```
-Figure : prévalence des taxons en rapport avec le total. Nous voyons que la prévalence des Firmicutes est très importante. Aucune séparation naturelle n'est immédiatement évidente. Ce serait bien de définir un seuil de prévalence dans un intervalle entre 0 et 10%.
+Figure : prévalence des taxons en rapport avec le total. Nous voyons que la prévalence des Firmicutes est très importante. Aucune séparation naturelle n'est immédiatement évidente. Ce serait bien de définir un seuil de prévalence dans un intervalle entre 0 et 10%. C'est pour cela qu'on va définir le seuil de prévalence à 5% afin de ne garder que ceux ayant une prévalence supérieure.
 
 
 ## Définition du seuil de prévalence à 5 % des échantillons totaux.
@@ -95,11 +96,11 @@ prevalenceThreshold
 keepTaxa = rownames(prevdf1)[(prevdf1$Prevalence >= prevalenceThreshold)]
 ps2 = prune_taxa(keepTaxa, ps)
 ```
-
+Nous gardons les taxa dont la prévalence est supérieure au seuil de prévalence de 0.05
 
 
 ## Agglomération
-Il est utilie d'agglomérer les caractéristiques correspondant aux données étroitement en lien car on sait qu'il y a beaucoup d'espèces ou de sous-espèces redondantes d'un point de vue fonctionnel dans une communauté. 
+Il est utile d'agglomérer les caractéristiques correspondant aux données étroitement en lien car on sait qu'il y a beaucoup d'espèces ou de sous-espèces redondantes d'un point de vue fonctionnel dans une communauté. 
 L'agglomération taxonomique a l'avantage d'être plus facile pour définir en avance.
 
 
@@ -151,12 +152,11 @@ library(gridExtra)
 ```{r}
 grid.arrange(nrow = 1, p2tree, p3tree, p4tree)
 ```
-Sur la gauche, on voit l'arbre original, au milieu celui des rangs des genres et à droite l'agglomération phylogénétique avec la distance phylogénétique de 0.4.
+Sur la gauche, on voit l'arbre original, au milieu celui des rangs des genres et à droite l'agglomération phylogénétique avec la distance phylogénétique de 0.4. On peut constater que l'arbre original contenait plus de branches que les deux autres.
 
 
 ## Transformation de la valeur d'abondance
 Transformation des données du microbiome pour tenir compte de différents paramètres (taille de la library, la variance, l'échelle...).
-Transform microbiome count data to account for differences in library size, variance, scale, etc.
 On veut un graphique d'abondance relative. 
 
 ```{r}
@@ -188,7 +188,7 @@ plotAfter = plot_abundance(ps3ra,"")
 # Combine each plot into one graphic.
 grid.arrange(nrow = 2,  plotBefore, plotAfter)
 ```
-On obtient les valeurs d'abondance avant et après la transformation. Les abondance originales sont en haut et les abondances relatives en bas.On voit les abondances relatives transformées selon le sexe. 
+On obtient les valeurs d'abondance avant et après la transformation. Les abondance originales sont en haut et les abondances relatives en bas. On voit les abondances relatives transformées selon le sexe. 
 
 
 # Sous-ensemble par la taxonomie
@@ -251,7 +251,7 @@ plot_ordination(pslog, out.wuf.log, color = "age_binned") +
   labs(col = "Binned Age") +
   coord_fixed(sqrt(evals[2] / evals[1]))
 ```
- Analyse d'ordination avec le log d'abondance. On retrouve des aberrances. Il s'agit des échantillons des femelles 5 et 6 au jour 165 et des échantillons des mâles 3, 4, 5 et 6 au jour 175. Nous les retirerons, car nous nous intéressons principalement aux relations entre les non- points aberrants.
+ Analyse d'ordination avec le log d'abondance. On retrouve des aberrances. Il s'agit des échantillons des femelles 5 et 6 au jour 165 et des échantillons des mâles 3, 4, 5 et 6 au jour 175. Nous les retirerons, car nous nous intéressons principalement aux relations entre les non-aberrants.
  
 Vérification des valeur aberrantes des femelles.
 
@@ -614,7 +614,7 @@ grid.arrange(ncol = 2,  plotNet2, plotPerm2)
 ```
 Figure : k=1 nearest-neighbor network and permutation histogram
 
-Si une paire d'échantillons a un lien entre eux dans le graphe du plus proche voisin, ils sont extrêmement susceptibles d'être dans la même 
+Si une paire d'échantillons a un lien entre eux dans le graphe du plus proche voisin, ils sont extrêmement susceptibles d'être dans la même. 
 
 
 # Modélisation linéaire
@@ -851,7 +851,7 @@ Graphique : c'est un triplot PCA où il y a les différents types d'échantillon
 
 
 # Conclusion
-Le langage R permet de débruiter, d'identifier et de normaliser des données de séquençage avec des modèles probabilistes avec des paramètres que l'on a choisi. 
+Le langage R permet de débruiter, d'identifier et de normaliser des données de séquençage avec des modèles probabilistes avec des paramètres que l'on a choisi. On a pu visualiser les différentes abondances, prévalences
 
 
 
