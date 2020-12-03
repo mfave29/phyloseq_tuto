@@ -1,8 +1,8 @@
-R Notebook
+Importation de données
 ================
 
-  - [Imports de donnée de Dada2 vers
-    PhyloSeq](#imports-de-donnée-de-dada2-vers-phyloseq)
+  - [Imports de données de Dada2 vers
+    PhyloSeq](#imports-de-données-de-dada2-vers-phyloseq)
       - [Chargement du “Dada2\_tutorial”](#chargement-du-dada2_tutorial)
       - [Installation de BiocManager et de
         phyloseq](#installation-de-biocmanager-et-de-phyloseq)
@@ -15,7 +15,7 @@ R Notebook
   - [Vizualize alpha-diversity](#vizualize-alpha-diversity)
   - [Ordinate](#ordinate)
 
-# Imports de donnée de Dada2 vers PhyloSeq
+# Imports de données de Dada2 vers PhyloSeq
 
 ## Chargement du “Dada2\_tutorial”
 
