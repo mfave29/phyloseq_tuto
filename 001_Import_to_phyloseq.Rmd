@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "Importation de données"
 output:
   github_document:
     toc: TRUE
@@ -7,7 +7,7 @@ output:
 ---
 
 
-# Imports de donnée de Dada2 vers PhyloSeq
+# Imports de données de Dada2 vers PhyloSeq
 
 ## Chargement du "Dada2_tutorial"
 
