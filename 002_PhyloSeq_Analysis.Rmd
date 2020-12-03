@@ -83,6 +83,7 @@ ggplot(prevdf1, aes(TotalAbundance, Prevalence / nsamples(ps),color=Phylum)) +
   scale_x_log10() +  xlab("Total Abundance") + ylab("Prevalence [Frac. Samples]") +
   facet_wrap(~Phylum) + theme(legend.position="none")
 ```
+
 Figure : prévalence des taxons en rapport avec le total. Nous voyons que la prévalence des Firmicutes est très importante. Aucune séparation naturelle n'est immédiatement évidente. Ce serait bien de définir un seuil de prévalence dans un intervalle entre 0 et 10%. C'est pour cela qu'on va définir le seuil de prévalence à 5% afin de ne garder que ceux ayant une prévalence supérieure.
 
 
@@ -152,6 +153,7 @@ library(gridExtra)
 ```{r}
 grid.arrange(nrow = 1, p2tree, p3tree, p4tree)
 ```
+
 Sur la gauche, on voit l'arbre original, au milieu celui des rangs des genres et à droite l'agglomération phylogénétique avec la distance phylogénétique de 0.4. On peut constater que l'arbre original contenait plus de branches que les deux autres.
 
 
@@ -188,6 +190,7 @@ plotAfter = plot_abundance(ps3ra,"")
 # Combine each plot into one graphic.
 grid.arrange(nrow = 2,  plotBefore, plotAfter)
 ```
+
 On obtient les valeurs d'abondance avant et après la transformation. Les abondance originales sont en haut et les abondances relatives en bas. On voit les abondances relatives transformées selon le sexe. 
 
 
@@ -228,6 +231,7 @@ BiocManager::install(version = "3.12")
 ```{r}
 qplot(sample_data(ps)$age, geom = "histogram",binwidth=20) + xlab("age")
 ```
+
 Histogramme des groupes d'âge, 3 parties distinctes
 
 
@@ -235,6 +239,7 @@ Histogramme des groupes d'âge, 3 parties distinctes
 qplot(log10(rowSums(otu_table(ps))),binwidth=0.2) +
   xlab("Logged counts-per-sample")
 ```
+
 Histogramme comparant les profondeurs de lecture brutes et transformées. La transformation pourrait être suffisante par normalisation des données d'abondance. En fait, elle ne l'est pas et donc, nous faisons une transformation de stabilisation de la variance.
  
  
@@ -251,6 +256,7 @@ plot_ordination(pslog, out.wuf.log, color = "age_binned") +
   labs(col = "Binned Age") +
   coord_fixed(sqrt(evals[2] / evals[1]))
 ```
+
 Analyse d'ordination avec le log d'abondance. On retrouve des aberrances. Il s'agit des échantillons des femelles 5 et 6 au jour 165 et des échantillons des mâles 3, 4, 5 et 6 au jour 175. Nous les retirerons, car nous nous intéressons principalement aux relations entre les non-aberrants.
  
 Vérification des valeur aberrantes des femelles.
@@ -260,7 +266,8 @@ rel_abund <- t(apply(otu_table(ps), 1, function(x) x / sum(x)))
 qplot(rel_abund[, 12], geom = "histogram",binwidth=0.05) +
   xlab("Relative abundance")
 ```
- Les échantillons aberrants sont dominés par un seul ASV (Amplicon Sequence Variant).
+ 
+Les échantillons aberrants sont dominés par un seul ASV (Amplicon Sequence Variant).
  
  
 # Projections d'ordination
@@ -290,6 +297,7 @@ plot_ordination(pslog, out.pcoa.log, color = "age_binned",
   labs(col = "Binned Age", shape = "Litter")+
   coord_fixed(sqrt(evals[2] / evals[1]))
 ```
+
 PcoA - Bray-Curtis
 On voit qu'il y a un effet d'âge important qui est cohérent avec le reste et que les litters ne sont à priori pas discriminatoires, du moins il y a un effet de l'âge plus important. 
 
@@ -302,6 +310,7 @@ plot_ordination(pslog, out.dpcoa.log, color = "age_binned", label= "SampleID",
   labs(col = "Binned Age", shape = "Litter")+
   coord_fixed(sqrt(evals[2] / evals[1]))
 ```
+
 Figure : Un graphique DPCoA incorpore des informations phylogénétiques, mais est dominé par le premier axe. La variabilité en plus de l'âge est la composition phylogénétique de chaque échantillon.
 Le premier axe explique 75% de la variabilité, environ 9 fois celle du deuxième axe; cela se traduit par la forme allongée du tracé d'ordination.
 
@@ -309,6 +318,7 @@ Le premier axe explique 75% de la variabilité, environ 9 fois celle du deuxièm
 plot_ordination(pslog, out.dpcoa.log, type = "species", color = "Phylum") +
   coord_fixed(sqrt(evals[2] / evals[1]))
 ```
+
 Graphique : taxons responsables des axes 1 et 2
 C'est une analyse en fonction des phylum. 
 
@@ -328,6 +338,7 @@ plot_ordination(pslog, out.wuf.log, color = "age_binned",
   coord_fixed(sqrt(evals[2] / evals[1])) +
   labs(col = "Binned Age", shape = "Litter")
 ```
+
 Utilisé UniFrac pondéré permet de mesurer quantitativement la dissimilitude communautaire qui intègre les relations phylogénétiques entre les échantillons.Il y a réellement un effet d'âge. 
 
 
@@ -373,6 +384,7 @@ ggplot(abund_df %>%
   labs(x = "Abundance", y = "Thresholded rank") +
   scale_color_brewer(palette = "Set2")
 ```
+
 Graphique : transformation du seuil de rang. On visualise les abondances selon le rang du seuil.
 
 ## On peut maintenant faire une PCA.
@@ -412,6 +424,7 @@ ggplot() +
   coord_fixed(sqrt(ranks_pca$eig[2] / ranks_pca$eig[1])) +
   theme(panel.border = element_rect(color = "#787878", fill = alpha("white", 0)))
 ```
+
 Les résultats sont similaires aux analyses PCoA sans transformation, ainsi nous avons une bonne confiance de l'analyse de nos données. On voit donc que les triangles (mélange de données) sont rassemblées et que les ronds sont dispersés. La vraie variance ici est donc l'ordre plutôt que la litter par exemple.
 # Correspondance canonique
 CCpnA : ordination d'une espèce par table d'échantillons.
@@ -517,6 +530,7 @@ ggplot() +
   facet_grid( ~ age2) +
   theme(panel.border = element_rect(color = "#787878", fill = alpha("white", 0)))
 ```
+
 Figure : PLS produit une représentation biplot conçue pour séparer les échantillons par une variable de réponse
 
 La projection est choisie avec une référence explicite à la variable d'âge regroupée. Plus précisément, PLS identifie un sous-espace pour maximiser la discrimination entre les classes, et le biplot affiche des projections d'échantillons et des coefficients ASV par rapport à ce sous-espace.
@@ -532,6 +546,7 @@ ggplot(rf_prox) +
   guides(col = guide_legend(override.aes = list(size = 4))) +
   labs(col = "Binned Age", x = "Axis1", y = "Axis2")
 ```
+
 Graphique : distance entre les échantillons. Une distance a été calculée entre les échantillons en fonction de la fréquence à laquelle l'échantillon se produit dans la même partition d'arbre dans un  random forest's bootstrapping.
 Si une paire d'échantillons se produit fréquemment dans la même cloison, la paire se voit attribuer une faible distance.
 
@@ -547,6 +562,7 @@ ggplot(maxImpDF) +   geom_histogram(aes(x = abund)) +
   facet_grid(age2 ~ .) +
   labs(x = "Abundance of discriminative bacteria", y = "Number of samples")
 ```
+
 L'espèce appartenant au genre Rosbeuria est le microorganisme qui a le plus d'influence dans la prédiction aléatoire de forest. Son abondance est basse dans les âges de 0 à 100 jours et beaucoup plus élevée dans les jours entre 100 et 400. 
 
 # Analyses basées sur des graphiques
@@ -575,8 +591,6 @@ ggplot(net_graph, aes(x = x, y = y, xend = xend, yend = yend), layout = "fruchte
   guides(col = guide_legend(override.aes = list(size = .5)))
 ```
 
-
-
 Graphique : réseau réalisé avec la matrice de dissimilarité de Jaccard. Il y a un regroupement des échantillons par souris et par portée. 
 
 
@@ -596,6 +610,7 @@ plotNet1=plot_test_network(gt) + theme(legend.text = element_text(size = 8),
 plotPerm1=plot_permutations(gt)
 grid.arrange(ncol = 2,  plotNet1, plotPerm1)
 ```
+
 Graphique et l'histogramme de permutation obtenus à partir de l'arbre couvrant minimal avec similitude Jaccard
 
 Il y a une petite p-value (0.004) et nous rejetons l'hypothèse nulle que les deux échantillons proviennent de la même distribution. 
@@ -614,6 +629,7 @@ plotNet2=plot_test_network(gt) + theme(legend.text = element_text(size = 8),
 plotPerm2=plot_permutations(gt)
 grid.arrange(ncol = 2,  plotNet2, plotPerm2)
 ```
+
 Figure : k=1 nearest-neighbor network and permutation histogram
 
 Si une paire d'échantillons a un lien entre eux dans le graphe du plus proche voisin, ils sont extrêmement susceptibles d'être dans la même. 
@@ -675,6 +691,7 @@ ggplot(ps_samp %>% left_join(new_data)) +
         axis.text.x = element_text(angle = -90, size = 6),
         axis.text.y = element_text(size = 6))
 ```
+
 Graphique : diversité de Shannon selon l'échantillon, l'âge sur deux portées différentes. On voit que l'âge joue un rôle sur cette différence de diversité. Il y a plus de diversité pour les souris âgée de 100 à 200. 
 
 
@@ -726,6 +743,7 @@ ggplot(abund_sums) +
   facet_grid(type ~ .) +
   xlab("Total abundance within sample")
 ```
+
 Abondance totale transformée DEseq2 dans chaque échantillon
 
 ```{r}
@@ -850,6 +868,7 @@ ggplot() +  geom_point(data = sample_info,
                    100 * round(pca_res$eig[2] / sum(pca_res$eig), 2)),
        fill = "Feature Type", col = "Sample Type")
 ```
+
 Graphique : c'est un triplot PCA où il y a les différents types d'échantillons et les caractéristiques multidomaines (métabolites et OTU). On peut donc comparer les échantillons et on peut caractériser l'influence des caractéristiques.
 
 
