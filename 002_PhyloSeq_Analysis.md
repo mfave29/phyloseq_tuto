@@ -1,4 +1,4 @@
-R Notebook
+Analyse - Phyloseq
 ================
 
   - [PhyloSeq](#phyloseq)
@@ -111,6 +111,7 @@ table(tax_table(ps)[, "Phylum"], exclude = NULL)
     ##                           6
 
 On voit le nombre des taxons. Les non-identifiés doivent être éliminés.
+On a 327 taxons différents chez les Firmicutes.
 
 ``` r
 ps <- subset_taxa(ps, !is.na(Phylum) & !Phylum %in% c("", "uncharacterized"))
@@ -147,7 +148,9 @@ plyr::ddply(prevdf, "Phylum", function(df1){cbind(mean(df1$Prevalence),sum(df1$P
 
 Nous voyons la prévalence des phyla. Deinococcus Thermus est apparu dans
 un peu plus de un pour cent des échantillons et Fusobactéries dans
-seulement 2 échantillons. Il faut donc les filtrer.
+seulement 2 échantillons. Il faut donc les filtrer. Pour donner un
+exemple, on a 1562 séquences d’Actinobacteries et environ 120 types
+d’Actinobacteries différentes.
 
 ## Filtrage
 
@@ -165,7 +168,8 @@ ps1
     ## tax_table()   Taxonomy Table:    [ 381 taxa by 6 taxonomic ranks ]
     ## phy_tree()    Phylogenetic Tree: [ 381 tips and 379 internal nodes ]
 
-Il s’agit d’une étape de filtrage.
+Il s’agit d’une étape de filtrage, où l’on a supprimé de l’analyse
+Deinococcus thermus et les Fusobacteria.
 
 ## Filtrage de prévalence
 
@@ -191,7 +195,9 @@ ggplot(prevdf1, aes(TotalAbundance, Prevalence / nsamples(ps),color=Phylum)) +
 Figure : prévalence des taxons en rapport avec le total. Nous voyons que
 la prévalence des Firmicutes est très importante. Aucune séparation
 naturelle n’est immédiatement évidente. Ce serait bien de définir un
-seuil de prévalence dans un intervalle entre 0 et 10%.
+seuil de prévalence dans un intervalle entre 0 et 10%. C’est pour cela
+qu’on va définir le seuil de prévalence à 5% afin de ne garder que ceux
+ayant une prévalence supérieure.
 
 ## Définition du seuil de prévalence à 5 % des échantillons totaux.
 
@@ -209,11 +215,14 @@ keepTaxa = rownames(prevdf1)[(prevdf1$Prevalence >= prevalenceThreshold)]
 ps2 = prune_taxa(keepTaxa, ps)
 ```
 
+Nous gardons les taxa dont la prévalence est supérieure au seuil de
+prévalence de 0.05
+
 ## Agglomération
 
-Il est utilie d’agglomérer les caractéristiques correspondant aux
-données étroitement en lien car on sait qu’il y a beaucoup d’espèces ou
-de sous-espèces redondantes d’un point de vue fonctionnel dans une
+Il est utile d’agglomérer les caractéristiques correspondant aux données
+étroitement en lien car on sait qu’il y a beaucoup d’espèces ou de
+sous-espèces redondantes d’un point de vue fonctionnel dans une
 communauté. L’agglomération taxonomique a l’avantage d’être plus facile
 pour définir en avance.
 
@@ -277,14 +286,14 @@ grid.arrange(nrow = 1, p2tree, p3tree, p4tree)
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 Sur la gauche, on voit l’arbre original, au milieu celui des rangs des
 genres et à droite l’agglomération phylogénétique avec la distance
-phylogénétique de 0.4.
+phylogénétique de 0.4. On peut constater que l’arbre original contenait
+plus de branches que les deux autres.
 
 ## Transformation de la valeur d’abondance
 
 Transformation des données du microbiome pour tenir compte de différents
-paramètres (taille de la library, la variance, l’échelle…). Transform
-microbiome count data to account for differences in library size,
-variance, scale, etc. On veut un graphique d’abondance relative.
+paramètres (taille de la library, la variance, l’échelle…). On veut un
+graphique d’abondance relative.
 
 ``` r
 plot_abundance = function(physeq,title = "",
@@ -322,7 +331,7 @@ grid.arrange(nrow = 2,  plotBefore, plotAfter)
 
 ![](002_PhyloSeq_Analysis_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 On obtient les valeurs d’abondance avant et après la transformation. Les
-abondance originales sont en haut et les abondances relatives en bas.On
+abondance originales sont en haut et les abondances relatives en bas. On
 voit les abondances relatives transformées selon le sexe.
 
 # Sous-ensemble par la taxonomie
@@ -378,6 +387,8 @@ BiocManager::install(version = "3.12")
     ## Installation path not writeable, unable to update packages: codetools,
     ##   KernSmooth, nlme
 
+    ## Old packages: 'isoband', 'lme4'
+
 ## Prétraitement - Âge des souris
 
 ``` r
@@ -410,7 +421,7 @@ out.wuf.log <- ordinate(pslog, method = "MDS", distance = "wunifrac")
 ```
 
     ## Warning in UniFrac(physeq, weighted = TRUE, ...): Randomly assigning root as --
-    ## GCGAGCGTTGTCCGGAATTACTGGGTGTAAAGGGAGCGTAGGCGGGGATGCAAGTTGGATGTTTAAACTATCGGCTCAACCGGTAATTGCAACCAAAACTGCAACTCTTGAGTGAAGTAGAGGCAGGCGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAGGAACACCAGTGGCGAAGGCGGCCTGCTGGGCTTTAACTGACGCTGAGGCTCGAAAGCGTGGGGAGC
+    ## GCAAGCGTTGTCCGGATTTACTGGGTGTAAAGGGCGTGTAGCCGGGCTGACAAGTCAGATGTGAAATCCGGGGGCTCAACCCCCGAACTGCATTTGAAACTGTTGGTCTTGAGTATCGGAGAGGCAGGCGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAGGAACACCAGTGGCGAAGGCGGCCTGCTGGACGACAACTGACGGTGAGGCGCGAAAGCGTGGGGAG
     ## -- in the phylogenetic tree in the data you provided.
 
 ``` r
@@ -425,7 +436,7 @@ Analyse d’ordination avec le log d’abondance. On retrouve des
 aberrances. Il s’agit des échantillons des femelles 5 et 6 au jour 165
 et des échantillons des mâles 3, 4, 5 et 6 au jour 175. Nous les
 retirerons, car nous nous intéressons principalement aux relations entre
-les non- points aberrants.
+les non-aberrants.
 
 Vérification des valeur aberrantes des femelles.
 
@@ -514,7 +525,7 @@ out.wuf.log <- ordinate(pslog, method = "PCoA", distance ="wunifrac")
 ```
 
     ## Warning in UniFrac(physeq, weighted = TRUE, ...): Randomly assigning root as --
-    ## GCAAGCGTTATCCGGATTTACTGGGTGTAAAGGGAGCGTAGGCGGCAGTGCAAGTCAGAAGTGAAAGCCCGGGGCTCAACTCCGGGACTGCTTTTGAAACTGTACAGCTTGATTGCAGGAGAGGCAAGTGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAGGAACACCAGTGGCGAAGGCGGCTTGCTGGACTGTAAATGACGCTGAGGCTCGAAAGCGTGGGGAG
+    ## GCGAGCGTTATCCGGATTTATTGGGTGTAAAGGGTGCGTAGATGGATAAACAAGTTGGTTGTGAAATCCCTCGGCTTAACTGAGGAATTGCAACCAAAACTGTAGATCTTGAGTACTGGAGGGGAAAGCGGAATTCCTAGTGTAGCGGTGAAATGCGTAGATATTAGGAAGAACACCGGTGGCGAAGGCGGCTTTCTGGACAGAAACTGACATTGAGGCACGAAAGTGTGGGGAG
     ## -- in the phylogenetic tree in the data you provided.
 
 ``` r
@@ -760,8 +771,8 @@ table(plsClasses, testing$age)
 
     ##            
     ## plsClasses  (0,100] (100,400]
-    ##   (0,100]        64         1
-    ##   (100,400]       3        44
+    ##   (0,100]        65         0
+    ##   (100,400]       4        47
 
 Prédiction
 
@@ -797,8 +808,8 @@ table(rfClasses, testing$age)
 
     ##            
     ## rfClasses   (0,100] (100,400]
-    ##   (0,100]        65         0
-    ##   (100,400]       2        45
+    ##   (0,100]        68        14
+    ##   (100,400]       1        33
 
 ``` r
 library(vegan)
@@ -880,7 +891,7 @@ distance.
 as.vector(tax_table(ps)[which.max(importance(rfFit$finalModel)), c("Family", "Genus")])
 ```
 
-    ## [1] "Lachnospiraceae" "Roseburia"
+    ## [1] "Lachnospiraceae" NA
 
 ``` r
 impOtu <- as.vector(otu_table(pslog)[,which.max(importance(rfFit$finalModel))])
@@ -972,7 +983,7 @@ gt <- graph_perm_test(ps, "family_relationship", grouping = "host_subject_id",
 gt$pval
 ```
 
-    ## [1] 0.004
+    ## [1] 0.006
 
 ``` r
 plotNet1=plot_test_network(gt) + theme(legend.text = element_text(size = 8),
@@ -1008,7 +1019,7 @@ grid.arrange(ncol = 2,  plotNet2, plotPerm2)
 Figure : k=1 nearest-neighbor network and permutation histogram
 
 Si une paire d’échantillons a un lien entre eux dans le graphe du plus
-proche voisin, ils sont extrêmement susceptibles d’être dans la même
+proche voisin, ils sont extrêmement susceptibles d’être dans la même.
 
 # Modélisation linéaire
 
@@ -1534,4 +1545,5 @@ l’influence des caractéristiques.
 
 Le langage R permet de débruiter, d’identifier et de normaliser des
 données de séquençage avec des modèles probabilistes avec des
-paramètres que l’on a choisi.
+paramètres que l’on a choisi. On a pu visualiser les différentes
+abondances, prévalences
