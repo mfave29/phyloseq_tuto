@@ -40,6 +40,7 @@ On extrait les noms des séquences et on ne garde que les caractères situés av
 ```{r}
 plotQualityProfile(fnFs[1:2])
 ```
+
 Nous obtenons les profils des scores de qualité des échantillons F3D1 et F3D0 pour leur Forward.
 
 
@@ -47,6 +48,7 @@ Nous obtenons les profils des scores de qualité des échantillons F3D1 et F3D0 
 ```{r}
 plotQualityProfile(fnRs[1:2])
 ```
+
 Nous obtenons les profils des scores de qualité des reverse des deux échantillons. On remarque que ces reverse reads sont de moins bonne qualité que les forward. 
 
 
@@ -84,12 +86,15 @@ errR <- learnErrors(filtRs, multithread=TRUE)
 ```{r}
 plotErrors(errF, nominalQ=TRUE)
 ```
+
 Nous voyons la fréquence des erreurs, selon par exemple que un "A" soit remplacé par un "C".
 
 # Inférence des échantillons (Forward and Reverse)
 ```{r}
 dadaFs <- dada(filtFs, err=errF, multithread=TRUE)
 ```
+
+
 Pour le forward de l'échantillon 1, par exemple, on obtient 7113 reads parmi 1979 séquences uniques. 
 On fait pareil avec les reverse des autres échantillons plus bas.
 
@@ -101,6 +106,7 @@ dadaRs <- dada(filtRs, err=errR, multithread=TRUE)
 ```{r}
 dadaFs[[1]]
 ```
+
 Cela permet de visualiser les vrais variants à partir de séquences uniques. 
 
 
@@ -117,11 +123,13 @@ head(mergers[[1]])
 seqtab <- makeSequenceTable(mergers)
 dim(seqtab)
 ```
+
 Il y a 293 séquences uniques différentes les unes par rapport aux autres.
 ```{r}
 # Inspect distribution of sequence lengths
 table(nchar(getSequences(seqtab)))
 ```
+
 Nous voyons la répartition des séquences uniques.
 
 # Elimination des chimères
@@ -129,11 +137,13 @@ Nous voyons la répartition des séquences uniques.
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
 dim(seqtab.nochim)
 ```
+
 Il y a 61 chimères parmi les 293 séquences. 
 
 ```{r}
 sum(seqtab.nochim)/sum(seqtab)
 ```
+
 Les chimères sont de 4% des reads de séquences fusionnées quand on prend en compte l'abondance des variants.
 
 # Track reads through the pipeline
@@ -145,6 +155,7 @@ colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "n
 rownames(track) <- sample.names
 head(track)
 ```
+
 On a fait un contrôle de qualité. Il n'y a pas tellement de perte.
 
 
@@ -162,6 +173,7 @@ taxa.print <- taxa # Removing sequence rownames for display only
 rownames(taxa.print) <- NULL
 head(taxa.print)
 ```
+
 Les Bactéroidetes sont très bien représentés dans l'échantillon.
 
 # Evaluer la précision
@@ -175,6 +187,9 @@ mock.ref <- getSequences(file.path(path, "HMP_MOCK.v35.fasta"))
 match.ref <- sum(sapply(names(unqs.mock), function(x) any(grepl(x, mock.ref))))
 cat("Of those,", sum(match.ref), "were exact matches to the expected reference sequences.\n")
 ```
+
+# Conclusion
+A travers Dada2, nous avons donc pu préparer nos échantillons pour une analyse par PhyloSeq par la suite. En effet, nous avons filtré, débruité, visualisé le taux  d'erreur et assemblé.
 
 
 
