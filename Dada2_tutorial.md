@@ -26,6 +26,7 @@ Dada2 tutorial
   - [Assigner une taxonomie](#assigner-une-taxonomie)
       - [Importation](#importation)
   - [Evaluer la précision](#evaluer-la-précision)
+  - [Conclusion](#conclusion)
 
 # Importation de phyloseq
 
@@ -98,9 +99,10 @@ situés avant le premier "\_".
 plotQualityProfile(fnFs[1:2])
 ```
 
-![](Dada2_tutorial_files/figure-gfm/unnamed-chunk-5-1.png)<!-- --> Nous
-obtenons les profils des scores de qualité des échantillons F3D1 et F3D0
-pour leur Forward.
+![](Dada2_tutorial_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+Nous obtenons les profils des scores de qualité des échantillons F3D1 et
+F3D0 pour leur Forward.
 
 # Profils de score de qualité des Reverse
 
@@ -108,8 +110,9 @@ pour leur Forward.
 plotQualityProfile(fnRs[1:2])
 ```
 
-![](Dada2_tutorial_files/figure-gfm/unnamed-chunk-6-1.png)<!-- --> Nous
-obtenons les profils des scores de qualité des reverse des deux
+![](Dada2_tutorial_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+Nous obtenons les profils des scores de qualité des reverse des deux
 échantillons. On remarque que ces reverse reads sont de moins bonne
 qualité que les forward.
 
@@ -172,8 +175,9 @@ plotErrors(errF, nominalQ=TRUE)
     
     ## Warning: Transformation introduced infinite values in continuous y-axis
 
-![](Dada2_tutorial_files/figure-gfm/unnamed-chunk-11-1.png)<!-- --> Nous
-voyons la fréquence des erreurs, selon par exemple que un “A” soit
+![](Dada2_tutorial_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+Nous voyons la fréquence des erreurs, selon par exemple que un “A” soit
 remplacé par un “C”.
 
 # Inférence des échantillons (Forward and Reverse)
@@ -431,6 +435,12 @@ cat("Of those,", sum(match.ref), "were exact matches to the expected reference s
 ```
 
     ## Of those, 20 were exact matches to the expected reference sequences.
+
+# Conclusion
+
+A travers Dada2, nous avons donc pu préparer nos échantillons pour une
+analyse par PhyloSeq par la suite. En effet, nous avons filtré,
+débruité, visualisé le taux d’erreur et assemblé.
 
 ``` r
 save.image(file = "Dada2_tutorial_FinalEnv")
